@@ -1,0 +1,25 @@
+{
+  "evaluation_examples": 10098,
+  "mcq_examples": 4905,
+  "notes": {
+    "grounding": "Corrected evaluation supports SonoInstruct's [0,1000] coordinate convention.",
+    "mcq": "Option-text accuracy is format-sensitive. Semantic-choice accuracy resolves question-specific option text first, then explicit labels.",
+    "uncertainty": "Single deterministic run per scale; no confidence intervals were estimated."
+  },
+  "models": [
+    {"model": "Base", "scale_pct": 0, "train_examples": 0, "train_loss": null, "val_loss": null, "strict_mcq_accuracy": 0.2194, "option_text_accuracy": 0.0067, "semantic_choice_accuracy": 0.1759, "contradiction_rate": 0.0, "open_token_f1": 0.2256, "open_rouge_l": 0.1509, "valid_box_rate": 0.2478, "mean_iou": 0.0894, "localization_at_0_5": 0.0531},
+    {"model": "5%", "scale_pct": 5, "train_examples": 9379, "train_loss": 1.3248, "val_loss": 1.1454, "strict_mcq_accuracy": 0.2434, "option_text_accuracy": 0.8457, "semantic_choice_accuracy": 0.8722, "contradiction_rate": 0.6722, "open_token_f1": 0.3174, "open_rouge_l": 0.2179, "valid_box_rate": 1.0, "mean_iou": 0.3020, "localization_at_0_5": 0.2496},
+    {"model": "10%", "scale_pct": 10, "train_examples": 19035, "train_loss": 1.1742, "val_loss": 1.0557, "strict_mcq_accuracy": 0.2497, "option_text_accuracy": 0.8922, "semantic_choice_accuracy": 0.9115, "contradiction_rate": 0.6960, "open_token_f1": 0.3320, "open_rouge_l": 0.2274, "valid_box_rate": 1.0, "mean_iou": 0.3231, "localization_at_0_5": 0.3204},
+    {"model": "25%", "scale_pct": 25, "train_examples": 47860, "train_loss": 1.0953, "val_loss": 1.0021, "strict_mcq_accuracy": 0.2540, "option_text_accuracy": 0.9062, "semantic_choice_accuracy": 0.9266, "contradiction_rate": 0.6983, "open_token_f1": 0.3379, "open_rouge_l": 0.2311, "valid_box_rate": 1.0, "mean_iou": 0.3615, "localization_at_0_5": 0.3717},
+    {"model": "50%", "scale_pct": 50, "train_examples": 95544, "train_loss": 1.0342, "val_loss": 0.9632, "strict_mcq_accuracy": 0.2487, "option_text_accuracy": 0.9127, "semantic_choice_accuracy": 0.9315, "contradiction_rate": 0.7040, "open_token_f1": 0.3428, "open_rouge_l": 0.2367, "valid_box_rate": 1.0, "mean_iou": 0.4419, "localization_at_0_5": 0.4690},
+    {"model": "100%", "scale_pct": 100, "train_examples": 190625, "train_loss": 1.0020, "val_loss": 0.9309, "strict_mcq_accuracy": 0.2522, "option_text_accuracy": 0.9154, "semantic_choice_accuracy": 0.9352, "contradiction_rate": 0.7015, "open_token_f1": 0.3514, "open_rouge_l": 0.2406, "valid_box_rate": 1.0, "mean_iou": 0.5831, "localization_at_0_5": 0.7115}
+  ],
+  "hardware_benchmark": {
+    "gpus": 4,
+    "effective_batch_size": 8,
+    "optimizer_steps": 50,
+    "a100_examples_per_second": 1.464,
+    "rtx_pro_6000_examples_per_second": 2.959,
+    "rtx_pro_6000_speedup": 2.02
+  }
+}

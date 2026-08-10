@@ -1,0 +1,67 @@
+model:
+  name: google/medgemma-1.5-4b-it
+  revision: null
+  dtype: bfloat16
+  trust_remote_code: false
+  require_hf_token: true
+  attn_implementation: null
+
+data:
+  root: ${SONOINSTRUCT_ROOT}
+  train_manifest: data/manifests/train_1pct.jsonl
+  val_manifest: data/manifests/val.jsonl
+  num_workers: 4
+  task_filters: []
+  source_filters: []
+  max_length: null
+
+lora:
+  enabled: true
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  train_projector: false
+  train_vision: false
+  qlora: false
+  qlora_compute_dtype: bfloat16
+
+training:
+  epochs: 1
+  max_steps: -1
+  learning_rate: 1.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  scheduler: cosine
+  per_device_batch_size: 1
+  eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  gradient_checkpointing: true
+  bf16: true
+  tf32: true
+  max_grad_norm: 1.0
+  save_steps: 500
+  eval_steps: 500
+  logging_steps: 10
+  save_total_limit: 3
+  seed: 42
+  resume_from_checkpoint: null
+  require_cuda: true
+  report_to:
+    - tensorboard
+
+generation:
+  max_new_tokens: 256
+  do_sample: false
+  temperature: null
+
+output:
+  root: ${SONOMED_OUTPUT_ROOT:-outputs}
+  run_name: null

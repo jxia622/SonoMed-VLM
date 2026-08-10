@@ -1,0 +1,6 @@
+extends: eval.yaml
+generation:
+  max_new_tokens: 64
+output:
+  root: ${SONOMED_OUTPUT_ROOT}
+  run_name: smoke_adapter_eval

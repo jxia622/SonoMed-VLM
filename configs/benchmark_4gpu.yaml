@@ -1,0 +1,9 @@
+extends: smoke.yaml
+training:
+  max_steps: 50
+  gradient_accumulation_steps: 2
+  save_steps: 50
+  eval_steps: 50
+  logging_steps: 1
+output:
+  run_name: benchmark_4gpu

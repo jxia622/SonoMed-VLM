@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use SonoMed-VLM, please cite this software."
+title: "SonoMed-VLM"
+type: software
+authors:
+  - family-names: Xia
+    given-names: Jack
+version: 0.1.0
+date-released: 2026-08-10
+url: "https://github.com/jxia622/SonoMed-VLM"
+repository-code: "https://github.com/jxia622/SonoMed-VLM"
+license: Apache-2.0

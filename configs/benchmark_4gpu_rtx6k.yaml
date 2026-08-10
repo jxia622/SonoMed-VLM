@@ -1,0 +1,3 @@
+extends: benchmark_4gpu.yaml
+output:
+  run_name: benchmark_4gpu_rtx6k

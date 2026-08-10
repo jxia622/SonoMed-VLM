@@ -1,0 +1,1 @@
+"""SonoMed-VLM tests."""

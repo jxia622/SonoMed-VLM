@@ -1,0 +1,77 @@
+# Operating-system and editor files
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.sonomed_env
+*.pem
+*.key
+*.p12
+*.token
+*credentials*
+*secrets*
+
+# Python environments, caches, and builds
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Hugging Face, experiment tracking, and profiler caches
+.cache/
+hf_cache/
+huggingface/
+wandb/
+mlruns/
+tensorboard/
+**/trace_rank*.json
+**/trace_rank*.json.gz
+**/profile_rank*.txt
+*.nsys-rep
+*.qdrep
+*.sqlite
+
+# Data, model, and run artifacts
+data/raw/
+data/cache/
+data/manifests/*
+outputs/
+checkpoints/
+logs/
+slurm-*.out
+*.out
+*.err
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+adapter_model.*
+optimizer.pt
+scheduler.pt
+trainer_state.json
+eval_predictions*.jsonl
+
+# Generated/private reports. Curated release summaries are explicitly tracked.
+artifacts/*
+results/*
+!artifacts/.gitkeep
+!results/scaling_results.csv
+!results/scaling_results.json
+
+# Keep repository placeholders
+!data/manifests/.gitkeep

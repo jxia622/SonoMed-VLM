@@ -1,0 +1,5 @@
+extends: rtx6k_scaling.yaml
+data:
+  train_manifest: data/manifests/train_50pct.jsonl
+output:
+  run_name: train_50pct_rtx6k

@@ -1,0 +1,15 @@
+extends: base.yaml
+data:
+  train_manifest: data/manifests/train_1pct.jsonl
+  val_manifest: data/manifests/val_smoke.jsonl
+  num_workers: 2
+training:
+  max_steps: 5
+  gradient_accumulation_steps: 2
+  save_steps: 5
+  eval_steps: 5
+  logging_steps: 1
+  save_total_limit: 3
+  resume_from_checkpoint: null
+output:
+  run_name: gpu_resume

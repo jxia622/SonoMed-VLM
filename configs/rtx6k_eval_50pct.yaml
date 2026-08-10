@@ -1,0 +1,3 @@
+extends: rtx6k_scaling.yaml
+output:
+  run_name: eval_50pct_rtx6k

@@ -1,0 +1,6 @@
+extends: base.yaml
+training:
+  require_cuda: true
+output:
+  root: results
+  run_name: baseline_medgemma

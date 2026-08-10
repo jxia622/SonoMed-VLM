@@ -1,0 +1,5 @@
+extends: base.yaml
+data:
+  train_manifest: data/manifests/train_10pct.jsonl
+output:
+  run_name: train_10pct
