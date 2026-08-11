@@ -1,5 +1,7 @@
 ---
-license: health-ai-developer-foundations
+license: other
+license_name: health-ai-developer-foundations-terms-of-use
+license_link: https://developers.google.com/health-ai-developer-foundations/terms
 base_model: google/medgemma-1.5-4b-it
 base_model_relation: adapter
 datasets:
@@ -25,6 +27,9 @@ SonoInstruct while keeping the vision tower and multimodal projector frozen.
 This repository contains **adapter weights only**. It does not contain MedGemma
 base weights, SonoInstruct data, optimizer state, intermediate checkpoints, or
 raw evaluation predictions.
+
+Source code and reproducibility materials are available at
+[jxia622/SonoMed-VLM](https://github.com/jxia622/SonoMed-VLM).
 
 > Research use only. This model is not a medical device and is not approved for
 > diagnosis, treatment, triage, or clinical decision-making. Outputs require
@@ -105,7 +110,7 @@ from transformers import AutoModelForImageTextToText, AutoProcessor
 
 base_id = "google/medgemma-1.5-4b-it"
 revision = "91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b"
-adapter_id = "jxia622/SonoMed-VLM-MedGemma-1.5-4B-LoRA"
+adapter_id = "jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA"
 
 processor = AutoProcessor.from_pretrained(base_id, revision=revision)
 base = AutoModelForImageTextToText.from_pretrained(

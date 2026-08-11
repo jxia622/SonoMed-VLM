@@ -2,6 +2,8 @@
 
 **Parameter-efficient domain adaptation of MedGemma 1.5 4B for ultrasound understanding and visual grounding.**
 
+[Hugging Face adapter](https://huggingface.co/jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA) · [Model card](MODEL_CARD.md) · [Evaluation protocol](docs/EVALUATION.md)
+
 SonoMed-VLM fine-tunes [`google/medgemma-1.5-4b-it`](https://huggingface.co/google/medgemma-1.5-4b-it) on [SonoInstruct](https://huggingface.co/datasets/Ssdaizi/SonoInstruct) with BF16 LoRA supervised fine-tuning. The project includes deterministic image-group-safe splits, assistant-only loss masking, multi-GPU training, raw-output-preserving evaluation, and a controlled 5%→100% data-scaling study.
 
 > Research software only. SonoMed-VLM is not a medical device, is not approved for diagnosis or treatment, and must not be used for clinical decisions without independent validation and appropriate regulatory authorization.
@@ -130,7 +132,7 @@ python examples/inference.py ultrasound.png \
   --prompt "Describe the visible anatomy and findings."
 ```
 
-The script loads the gated MedGemma base model separately, then applies the LoRA adapter from `jxia622/SonoMed-VLM-MedGemma-1.5-4B-LoRA`.
+The script loads the gated MedGemma base model separately, then applies the LoRA adapter from `jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA`.
 
 ## Training
 

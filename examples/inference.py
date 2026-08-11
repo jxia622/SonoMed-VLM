@@ -12,7 +12,7 @@ from transformers import AutoModelForImageTextToText, AutoProcessor
 
 BASE_MODEL = "google/medgemma-1.5-4b-it"
 BASE_REVISION = "91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b"
-ADAPTER = "jxia622/SonoMed-VLM-MedGemma-1.5-4B-LoRA"
+ADAPTER = "jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA"
 
 
 def main() -> None:
