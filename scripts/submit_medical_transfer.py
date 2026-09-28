@@ -17,6 +17,21 @@ def main():
     root = Path(os.environ["SONOMED_PROJECT_ROOT"])
     os.chdir(root)
     (root / "logs").mkdir(exist_ok=True)
+    baseline_state = (
+        subprocess.check_output(
+            ["sacct", "-M", "gpu", "-j", "4079527", "-X", "-n", "--format=State"],
+            text=True,
+        )
+        .strip()
+        .split()
+    )
+    if len(baseline_state) != 1 or baseline_state[0] not in {
+        "COMPLETED",
+        "RUNNING",
+        "PENDING",
+        "COMPLETING",
+    }:
+        raise RuntimeError(f"Reused full baseline is unavailable or failed: {baseline_state}")
     # Refuse accidental duplicate deployment, even after a partial submit failure.
     receipt = open(root / "submission-medical-transfer.tsv", "x", buffering=1)
     writer = csv.writer(receipt, delimiter="\t", lineterminator="\n")
@@ -68,7 +83,12 @@ def main():
             for fraction in [1, 10, 100]:
                 deps = [dependency]
                 # Existing corrected seed-42 full baseline may still be running.
-                if arm == "direct" and seed == 42 and fraction == 100:
+                if (
+                    arm == "direct"
+                    and seed == 42
+                    and fraction == 100
+                    and baseline_state[0] != "COMPLETED"
+                ):
                     deps.append("4079527")
                 limit = (
                     "03:00:00" if fraction == 1 else "05:00:00" if fraction == 10 else "16:00:00"
