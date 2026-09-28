@@ -15,7 +15,7 @@ import _bootstrap  # noqa: F401
 
 from sonomed_vlm.config import load_config, save_resolved_config
 from sonomed_vlm.data.collator import AssistantOnlyMultimodalCollator
-from sonomed_vlm.data.sonoinstruct import ManifestDataset
+from sonomed_vlm.data.text_qa import dataset_class
 from sonomed_vlm.models.lora import apply_lora, parameter_report
 from sonomed_vlm.models.medgemma import architecture_report, load_medgemma, validate_training_device
 from sonomed_vlm.training.checkpointing import resolve_resume_checkpoint
@@ -27,7 +27,7 @@ from sonomed_vlm.training.metadata import (
     save_environment_files,
 )
 from sonomed_vlm.training.trainer import build_trainer
-from sonomed_vlm.utils.io import write_json
+from sonomed_vlm.utils.io import sha256_file, write_json
 from sonomed_vlm.utils.logging import configure_logging
 from sonomed_vlm.utils.reproducibility import seed_everything
 
@@ -38,10 +38,23 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--resume-from-checkpoint", default=None)
-    parser.add_argument("--max-eval-examples", type=int, default=None,
-                        help="Limit validation for an engineering smoke test only")
-    parser.add_argument("--strict-numerics", action="store_true",
-                        help="Fail the job if loss or gradient logs are non-finite")
+    parser.add_argument(
+        "--initialize-adapter",
+        type=Path,
+        default=None,
+        help="Continue the same LoRA weights with a fresh optimizer and schedule",
+    )
+    parser.add_argument(
+        "--max-eval-examples",
+        type=int,
+        default=None,
+        help="Limit validation for an engineering smoke test only",
+    )
+    parser.add_argument(
+        "--strict-numerics",
+        action="store_true",
+        help="Fail the job if loss or gradient logs are non-finite",
+    )
     args = parser.parse_args()
     if args.max_eval_examples is not None and args.max_eval_examples < 1:
         parser.error("--max-eval-examples must be positive")
@@ -57,14 +70,19 @@ def main() -> None:
     configure_logging(run_dir / "run.log")
     started = time.monotonic()
 
-    train_dataset = ManifestDataset(
+    if args.initialize_adapter and (
+        args.resume_from_checkpoint or config.training.resume_from_checkpoint
+    ):
+        raise ValueError("Adapter initialization and optimizer resume are mutually exclusive")
+    dataset_type = dataset_class(config)
+    train_dataset = dataset_type(
         config.data.train_manifest,
         config.data.root,
         task_filters=config.data.task_filters,
         source_filters=config.data.source_filters,
         instruction_protocol=config.data.instruction_protocol,
     )
-    eval_dataset = ManifestDataset(
+    eval_dataset = dataset_type(
         config.data.val_manifest,
         config.data.root,
         task_filters=config.data.task_filters,
@@ -72,10 +90,15 @@ def main() -> None:
         instruction_protocol=config.data.instruction_protocol,
     )
     if args.max_eval_examples is not None:
-        eval_dataset.records = eval_dataset.records[:args.max_eval_examples]
+        eval_dataset.records = eval_dataset.records[: args.max_eval_examples]
     model, processor = load_medgemma(config, for_training=True)
     architecture = architecture_report(model)
-    model, targets = apply_lora(model, config.lora)
+    if args.initialize_adapter:
+        from sonomed_vlm.models.lora import load_trainable_adapter
+
+        model, targets = load_trainable_adapter(model, config, args.initialize_adapter)
+    else:
+        model, targets = apply_lora(model, config.lora)
     parameters = parameter_report(model)
     if parameters.trainable == 0:
         raise RuntimeError("No trainable parameters remain after LoRA injection")
@@ -102,6 +125,15 @@ def main() -> None:
         metadata.update(
             {
                 "train_examples": len(train_dataset),
+                "data_format": config.data.format,
+                "initial_adapter": str(args.initialize_adapter.resolve())
+                if args.initialize_adapter
+                else None,
+                "initial_adapter_sha256": sha256_file(
+                    args.initialize_adapter / "adapter_model.safetensors"
+                )
+                if args.initialize_adapter
+                else None,
                 "instruction_protocol": config.data.instruction_protocol,
                 "max_eval_examples": args.max_eval_examples,
                 "validation_examples": len(eval_dataset),

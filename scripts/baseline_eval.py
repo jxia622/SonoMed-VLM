@@ -15,7 +15,7 @@ import _bootstrap  # noqa: F401
 
 from sonomed_vlm.config import load_config, save_resolved_config
 from sonomed_vlm.data.collator import build_messages
-from sonomed_vlm.data.sonoinstruct import ManifestDataset
+from sonomed_vlm.data.text_qa import dataset_class
 from sonomed_vlm.eval.aggregate import aggregate_scores
 from sonomed_vlm.eval.parsing import score_prediction
 from sonomed_vlm.models.lora import apply_lora, find_decoder_lora_targets, parameter_report
@@ -73,7 +73,7 @@ def main() -> None:
     run_dir = config.output.root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    dataset = ManifestDataset(
+    dataset = dataset_class(config)(
         config.data.val_manifest,
         config.data.root,
         task_filters=config.data.task_filters,
@@ -139,7 +139,10 @@ def main() -> None:
         record["parsed_prediction"] = record["score"].get("parsed_prediction")
         rows.append(record)
         if len(rows) % 100 == 0:
-            print(f"rank={rank} completed={len(rows)} elapsed={time.monotonic() - started:.1f}s", flush=True)
+            print(
+                f"rank={rank} completed={len(rows)} elapsed={time.monotonic() - started:.1f}s",
+                flush=True,
+            )
 
     shard_path = run_dir / f"eval_predictions.rank-{rank:02d}.jsonl"
     write_jsonl(shard_path, rows)
@@ -226,6 +229,7 @@ def main() -> None:
     )
     metadata["evaluated_examples"] = len(rows)
     metadata["instruction_protocol"] = config.data.instruction_protocol
+    metadata["data_format"] = config.data.format
     metadata["model_name"] = config.model.name
     metadata["adapter_path"] = str(args.adapter.resolve()) if args.adapter else None
     if args.adapter:

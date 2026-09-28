@@ -50,6 +50,9 @@ tensorboard/
 data/raw/
 data/cache/
 data/manifests/*
+data/medical-transfer/
+configs/medical_transfer_generated/
+submission-medical-transfer.tsv
 outputs/
 checkpoints/
 logs/

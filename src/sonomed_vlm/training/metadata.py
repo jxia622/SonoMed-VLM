@@ -23,7 +23,12 @@ def git_commit(project_root: Path) -> str:
         text=True,
         check=False,
     )
-    return result.stdout.strip() if result.returncode == 0 else "uncommitted/no-git-revision"
+    if result.returncode == 0:
+        return result.stdout.strip()
+    deployed_commit = project_root / "SOURCE_COMMIT"
+    if deployed_commit.is_file():
+        return deployed_commit.read_text(encoding="utf-8").strip()
+    return "uncommitted/no-git-revision"
 
 
 def package_versions() -> dict[str, str]:

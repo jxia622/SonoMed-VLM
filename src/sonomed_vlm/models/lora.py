@@ -118,3 +118,28 @@ def parameter_report(model: Any) -> ParameterReport:
         trainable_percent=(100 * trainable / total) if total else 0.0,
         trainable_names=names,
     )
+
+
+def load_trainable_adapter(model, config, path):
+    """Continue one adapter, never stack adapters or increase trainable capacity."""
+    from peft import PeftConfig, PeftModel
+
+    saved = PeftConfig.from_pretrained(path)
+    expected = find_decoder_lora_targets(model, config.lora.target_modules)
+    if (
+        saved.r != config.lora.rank
+        or saved.lora_alpha != config.lora.alpha
+        or saved.lora_dropout != config.lora.dropout
+        or set(saved.target_modules) != set(expected)
+        or saved.base_model_name_or_path != config.model.name
+        or saved.modules_to_save
+        or saved.bias != "none"
+    ):
+        raise ValueError("Intermediate adapter does not match the downstream adaptation recipe")
+    for parameter in model.parameters():
+        parameter.requires_grad = False
+    model = PeftModel.from_pretrained(model, path, is_trainable=True)
+    report = parameter_report(model)
+    if not report.trainable or any("lora_" not in n for n in report.trainable_names):
+        raise ValueError("Only LoRA parameters may remain trainable")
+    return model, expected
