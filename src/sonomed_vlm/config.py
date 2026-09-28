@@ -42,6 +42,7 @@ class ModelConfig(StrictModel):
     trust_remote_code: bool = False
     require_hf_token: bool = True
     attn_implementation: str | None = None
+    image_max_pixels: int | None = Field(default=None, ge=65536)
 
 
 class DataConfig(StrictModel):

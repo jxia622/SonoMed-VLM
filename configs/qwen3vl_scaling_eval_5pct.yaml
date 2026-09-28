@@ -1,0 +1,3 @@
+extends: qwen3vl_scaling_5pct.yaml
+output:
+  run_name: qwen3vl_eval_5pct

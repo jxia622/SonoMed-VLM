@@ -15,7 +15,9 @@ def score_prediction(record: dict[str, Any]) -> dict[str, Any]:
     task_type = str(record.get("task_type") or "").casefold()
     task_family = str(record.get("task_family") or "").casefold()
     options = list(record.get("options") or [])
-    if task_type in {"mcq", "multiple_choice", "multiple-choice"} or options:
+    # Some QA records retain choice metadata. An explicit task label takes
+    # precedence; only infer MCQ from options when no task type was supplied.
+    if task_type in {"mcq", "multiple_choice", "multiple-choice"} or (not task_type and options):
         return mcq_score(raw, record.get("answer_label"), options)
     if "ground" in task_type or task_family in {"vg", "sonogrounding"}:
         prediction_box = parse_box(raw, coordinate_max=1000.0)

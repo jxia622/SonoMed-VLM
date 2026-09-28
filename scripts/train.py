@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import os
 import time
 from datetime import UTC, datetime
@@ -37,7 +38,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--resume-from-checkpoint", default=None)
+    parser.add_argument("--max-eval-examples", type=int, default=None,
+                        help="Limit validation for an engineering smoke test only")
+    parser.add_argument("--strict-numerics", action="store_true",
+                        help="Fail the job if loss or gradient logs are non-finite")
     args = parser.parse_args()
+    if args.max_eval_examples is not None and args.max_eval_examples < 1:
+        parser.error("--max-eval-examples must be positive")
     config = load_config(args.config)
     if args.resume_from_checkpoint:
         config.training.resume_from_checkpoint = args.resume_from_checkpoint
@@ -62,6 +69,8 @@ def main() -> None:
         task_filters=config.data.task_filters,
         source_filters=config.data.source_filters,
     )
+    if args.max_eval_examples is not None:
+        eval_dataset.records = eval_dataset.records[:args.max_eval_examples]
     model, processor = load_medgemma(config, for_training=True)
     architecture = architecture_report(model)
     model, targets = apply_lora(model, config.lora)
@@ -91,6 +100,7 @@ def main() -> None:
         metadata.update(
             {
                 "train_examples": len(train_dataset),
+                "max_eval_examples": args.max_eval_examples,
                 "validation_examples": len(eval_dataset),
                 "effective_batch_size": config.training.per_device_batch_size
                 * config.training.gradient_accumulation_steps
@@ -117,6 +127,17 @@ def main() -> None:
         config=config,
         run_dir=run_dir,
     )
+    if args.strict_numerics:
+        from transformers import TrainerCallback
+
+        class FiniteMetricsCallback(TrainerCallback):
+            def on_log(self, args, state, control, logs=None, **kwargs):
+                for key, value in (logs or {}).items():
+                    if isinstance(value, (int, float)) and not math.isfinite(value):
+                        raise FloatingPointError(f"Non-finite training metric {key}={value}")
+
+        trainer.args.logging_nan_inf_filter = False
+        trainer.add_callback(FiniteMetricsCallback())
     resume = resolve_resume_checkpoint(
         config.training.resume_from_checkpoint, run_dir / "checkpoints"
     )

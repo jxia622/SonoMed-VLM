@@ -30,7 +30,7 @@ from sonomed_vlm.training.metadata import (
     resolve_dataset_revision,
     save_environment_files,
 )
-from sonomed_vlm.utils.io import read_jsonl, write_json, write_jsonl
+from sonomed_vlm.utils.io import read_jsonl, sha256_file, write_json, write_jsonl
 from sonomed_vlm.utils.reproducibility import seed_everything
 
 
@@ -134,6 +134,8 @@ def main() -> None:
         record["score"] = score_prediction(record)
         record["parsed_prediction"] = record["score"].get("parsed_prediction")
         rows.append(record)
+        if len(rows) % 100 == 0:
+            print(f"rank={rank} completed={len(rows)} elapsed={time.monotonic() - started:.1f}s", flush=True)
 
     shard_path = run_dir / f"eval_predictions.rank-{rank:02d}.jsonl"
     write_jsonl(shard_path, rows)
@@ -182,7 +184,7 @@ def main() -> None:
     )
     write_json(run_dir / "architecture.json", architecture)
     project_root = Path.cwd()
-    artifact_dir = project_root / "artifacts"
+    artifact_dir = run_dir / "artifacts"
     write_json(artifact_dir / "medgemma_architecture.json", architecture)
     markdown_lines = [
         "# MedGemma runtime architecture",
@@ -219,6 +221,10 @@ def main() -> None:
         dataset_revision=resolve_dataset_revision(config.data.root, config.data.val_manifest),
     )
     metadata["evaluated_examples"] = len(rows)
+    metadata["model_name"] = config.model.name
+    metadata["adapter_path"] = str(args.adapter.resolve()) if args.adapter else None
+    if args.adapter:
+        metadata["adapter_sha256"] = sha256_file(args.adapter / "adapter_model.safetensors")
     save_environment_files(run_dir, metadata)
     finalize_compute(run_dir / "metadata.json", started, examples=len(rows))
     print(json.dumps(metrics, indent=2, sort_keys=True))

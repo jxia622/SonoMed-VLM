@@ -1,0 +1,5 @@
+extends: qwen3vl_base.yaml
+data:
+  train_manifest: data/manifests/train.jsonl
+output:
+  run_name: qwen3vl_100pct

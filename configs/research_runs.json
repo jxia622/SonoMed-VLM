@@ -1,0 +1,106 @@
+[
+  {
+    "name": "qwen_0pct",
+    "family": "qwen",
+    "scale_pct": 0,
+    "train_examples": 0,
+    "evaluation_dir": "qwen-medgemma-comparison-20260926/qwen_original",
+    "training_dir": null
+  },
+  {
+    "name": "qwen_1pct",
+    "family": "qwen",
+    "scale_pct": 1,
+    "train_examples": 1906,
+    "evaluation_dir": "qwen3vl-scaling-20260927/qwen3vl_eval_1pct",
+    "training_dir": "qwen3vl-scaling-20260927/qwen3vl_train_1pct"
+  },
+  {
+    "name": "qwen_5pct",
+    "family": "qwen",
+    "scale_pct": 5,
+    "train_examples": 9379,
+    "evaluation_dir": "qwen3vl-scaling-20260927/qwen3vl_eval_5pct",
+    "training_dir": "qwen3vl-scaling-20260927/qwen3vl_train_5pct"
+  },
+  {
+    "name": "qwen_10pct",
+    "family": "qwen",
+    "scale_pct": 10,
+    "train_examples": 19035,
+    "evaluation_dir": "qwen3vl-scaling-20260927/qwen3vl_eval_10pct",
+    "training_dir": "qwen3vl-scaling-20260927/qwen3vl_train_10pct"
+  },
+  {
+    "name": "qwen_25pct",
+    "family": "qwen",
+    "scale_pct": 25,
+    "train_examples": 47860,
+    "evaluation_dir": "qwen3vl-scaling-20260927/qwen3vl_eval_25pct",
+    "training_dir": "qwen3vl-scaling-20260927/qwen3vl_train_25pct"
+  },
+  {
+    "name": "qwen_50pct",
+    "family": "qwen",
+    "scale_pct": 50,
+    "train_examples": 95544,
+    "evaluation_dir": "qwen3vl-scaling-20260927/qwen3vl_eval_50pct",
+    "training_dir": "qwen3vl-scaling-20260927/qwen3vl_train_50pct"
+  },
+  {
+    "name": "qwen_100pct",
+    "family": "qwen",
+    "scale_pct": 100,
+    "train_examples": 190625,
+    "evaluation_dir": "qwen-medgemma-comparison-20260926/qwen_finetuned",
+    "training_dir": "qwen3vl-20260925/qwen3vl_100pct"
+  },
+  {
+    "name": "medgemma_0pct",
+    "family": "medgemma",
+    "scale_pct": 0,
+    "train_examples": 0,
+    "evaluation_dir": "eval_base_medgemma_rtx6k",
+    "training_dir": null
+  },
+  {
+    "name": "medgemma_5pct",
+    "family": "medgemma",
+    "scale_pct": 5,
+    "train_examples": 9379,
+    "evaluation_dir": "eval_5pct_rtx6k",
+    "training_dir": "train_5pct_rtx6k"
+  },
+  {
+    "name": "medgemma_10pct",
+    "family": "medgemma",
+    "scale_pct": 10,
+    "train_examples": 19035,
+    "evaluation_dir": "eval_10pct_rtx6k",
+    "training_dir": "train_10pct_rtx6k"
+  },
+  {
+    "name": "medgemma_25pct",
+    "family": "medgemma",
+    "scale_pct": 25,
+    "train_examples": 47860,
+    "evaluation_dir": "eval_25pct_rtx6k",
+    "training_dir": "train_25pct_rtx6k"
+  },
+  {
+    "name": "medgemma_50pct",
+    "family": "medgemma",
+    "scale_pct": 50,
+    "train_examples": 95544,
+    "evaluation_dir": "eval_50pct_rtx6k",
+    "training_dir": "train_50pct_rtx6k"
+  },
+  {
+    "name": "medgemma_100pct",
+    "family": "medgemma",
+    "scale_pct": 100,
+    "train_examples": 190625,
+    "evaluation_dir": "eval_100pct_rtx6k",
+    "training_dir": "train_100pct_rtx6k"
+  }
+]

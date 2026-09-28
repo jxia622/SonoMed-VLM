@@ -82,6 +82,11 @@ def load_medgemma(
 
     try:
         processor = AutoProcessor.from_pretrained(config.model.name, **common)
+        if config.model.image_max_pixels is not None:
+            image_processor = processor.image_processor
+            if "longest_edge" not in image_processor.size:
+                raise ValueError("image_max_pixels requires an area-based Qwen image processor")
+            image_processor.size["longest_edge"] = config.model.image_max_pixels
         model = AutoModelForImageTextToText.from_pretrained(config.model.name, **model_kwargs)
     except OSError as exc:
         raise RuntimeError(

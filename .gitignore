@@ -72,6 +72,8 @@ results/*
 !artifacts/.gitkeep
 !results/scaling_results.csv
 !results/scaling_results.json
+!results/research_results.csv
+!results/research_results.json
 
 # Keep repository placeholders
 !data/manifests/.gitkeep

@@ -27,7 +27,7 @@ def main() -> None:
             [float(row["localization_at_0_5"]) for row in rows],
         ),
         "open_response_f1": (
-            "Open-response token F1",
+            "QA + open-response token F1",
             [float(row["open_token_f1"]) for row in rows],
         ),
     }

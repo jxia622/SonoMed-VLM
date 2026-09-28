@@ -4,9 +4,14 @@ SonoMed-VLM uses deterministic generation and preserves each prompt, reference,
 raw output, parsed output, generation setting, task family, source, and focus.
 Saved JSONL outputs can therefore be re-scored without loading a model.
 
+> **2026-09-27 protocol audit:** All published runs used MCQ prompts without the
+> question-specific answer choices. These scores are diagnostic answer matching,
+> not conventional MCQ accuracy. See [the audit](MCQ_PROMPT_AUDIT_20260927.md).
+> Grounding is not directly affected by this omission.
+
 ## Multiple choice
 
-The evaluator reports complementary metrics rather than hiding format errors:
+The evaluator retains these separate diagnostic metrics for the historical protocol:
 
 - **Strict label accuracy:** the emitted A/B/C/D label matches the gold label.
 - **Option-text accuracy:** the emitted answer text matches the correct option
@@ -47,7 +52,10 @@ from the original artifacts.
 
 Metrics are aggregated only over applicable records and are available overall,
 by task family, task type, focus, and source. The release split contains 10,098
-examples, including 4,905 MCQs and 565 grounding examples.
+examples: 4,905 MCQ-labeled records, 4,628 QA/open responses, and 565 grounding examples.
+Explicit task labels take precedence over option metadata; 167 QA records with
+options remain QA. Historical summaries used different routing and pooling; use
+[the common-scorer research results](../results/research_results.json).
 
 Generate outputs with `scripts/baseline_eval.py`, or re-score saved outputs:
 

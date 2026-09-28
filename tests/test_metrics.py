@@ -99,6 +99,23 @@ def test_generation_metrics_known_values() -> None:
     assert rouge_l_f1("normal left kidney", "left kidney") == pytest.approx(0.8)
 
 
+def test_explicit_qa_type_is_not_reclassified_by_option_metadata() -> None:
+    score = score_prediction({
+        "task_type": "qa", "options": ["A: Kidney", "B: Liver"], "answer_label": "A",
+        "ground_truth": "Kidney", "raw_model_output": "Kidney",
+    })
+    assert score["token_f1"] == 1.0
+    assert "strict_label_accuracy" not in score
+
+
+def test_untyped_record_can_infer_mcq_from_options() -> None:
+    score = score_prediction({
+        "options": ["A: Kidney", "B: Liver"], "answer_label": "A",
+        "raw_model_output": "A: Kidney",
+    })
+    assert score["strict_label_accuracy"] == 1.0
+
+
 def test_grounding_parser_and_iou() -> None:
     box = parse_box("[0.1, 0.2, 0.5, 0.8]")
     assert box.valid and box.coordinates is not None

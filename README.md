@@ -1,216 +1,169 @@
 # SonoMed-VLM
 
-**Parameter-efficient domain adaptation of MedGemma 1.5 4B for ultrasound understanding and visual grounding.**
+### Does medical specialization help a model adapt to ultrasound?
 
-[Hugging Face adapter](https://huggingface.co/jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA) · [Model card](MODEL_CARD.md) · [Evaluation protocol](docs/EVALUATION.md)
+A reproducible comparison of **MedGemma 1.5 4B** and **Qwen3-VL 4B** across training-data scales, with decoder-only LoRA and a shared held-out SonoInstruct split.
 
-SonoMed-VLM fine-tunes [`google/medgemma-1.5-4b-it`](https://huggingface.co/google/medgemma-1.5-4b-it) on [SonoInstruct](https://huggingface.co/datasets/Ssdaizi/SonoInstruct) with BF16 LoRA supervised fine-tuning. The project includes deterministic image-group-safe splits, assistant-only loss masking, multi-GPU training, raw-output-preserving evaluation, and a controlled 5%→100% data-scaling study.
+[Research report](docs/RESEARCH.md) · [Results CSV](results/research_results.csv) · [Results + provenance](results/research_results.json) · [Evaluation protocol](docs/EVALUATION.md) · [Released MedGemma adapter](https://huggingface.co/jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA)
 
-> Research software only. SonoMed-VLM is not a medical device, is not approved for diagnosis or treatment, and must not be used for clinical decisions without independent validation and appropriate regulatory authorization.
+![Original and adapted model grounding performance](docs/assets/research/grounding_comparison.png)
 
-## Highlights
+**Current finding:** Under our one-epoch recipe, adapted Qwen achieved higher ultrasound grounding scores than adapted MedGemma at every shared tested data fraction. At full data, mean IoU was **0.7449 vs. 0.5831**. At just **5%** of training data, Qwen reached **0.6143**, above MedGemma's full-data observation.
 
-- **93.5% semantic-choice accuracy** on 4,905 MCQs (format-normalized choice resolution)
-- **91.5% MCQ option-text accuracy**, reported separately from 25.2% strict label accuracy
-- **0.583 mean IoU / 71.2% Localization@0.5** for ultrasound visual grounding
-- **6.5× higher mean IoU** than untouched MedGemma (0.583 vs. 0.089)
-- **190,625 training examples** with a controlled 5%, 10%, 25%, 50%, and 100% scaling study
-- **2.02× training throughput** on 4× RTX PRO 6000 Blackwell versus 4× A100 in the same 50-step benchmark
+> **Research status:** Preliminary, single-seed results on a validation split, not official SonoBench or external clinical results. An audit found that MCQ choices were omitted from both training and inference. MCQ-derived scores below are diagnostic answer matching, **not valid standard MCQ accuracy**. [Read the audit](docs/MCQ_PROMPT_AUDIT_20260927.md).
 
-## Overview
+## Why compare these models?
 
-The pipeline adapts the language backbone while keeping the MedGemma vision tower frozen. Rank-16 LoRA adapters are injected into 238 decoder projection modules (`q/k/v/o`, gate, up, and down projections), producing 29.8M trainable parameters. Training uses one epoch, cosine learning-rate scheduling, gradient checkpointing, and an effective batch size of eight across four GPUs.
+Medical knowledge may help ultrasound interpretation, but useful transfer could depend on the task and imaging modality. We ask whether starting from a medically specialized model produces better adaptation and data efficiency than starting from a similarly sized general VLM.
 
-```mermaid
-flowchart LR
-    A["Ultrasound image + instruction"] --> B["MedGemma vision encoder<br/>(frozen)"]
-    B --> C["Gemma decoder-only<br/>language backbone"]
-    C --> D["LoRA adapters<br/>(29.8M trainable parameters)"]
-    D --> E["QA / report / MCQ /<br/>grounding output"]
-```
+Our initial hypothesis was that specialization in other medical modalities might transfer less effectively to ultrasound than general visual grounding. **We have not demonstrated that MedGemma overfit CT or MRI.** Its documented training spans medical text, QA, and several image modalities; Qwen also cannot be assumed to have had zero medical exposure. [MedGemma model card](https://huggingface.co/google/medgemma-1.5-4b-it).
 
-## Key results
+This experiment compares complete model families, whose architectures, processors and pretraining differ. It cannot isolate the effect of medical QA training. The [research report](docs/RESEARCH.md) explains alternative explanations, related work, and the controls needed to test causality.
 
-All adapted models were evaluated on the same 10,098-example held-out split. Values below are from the corrected evaluator; the grounding parser supports SonoInstruct's `[0,1000]` box convention.
+## Grounding results
 
-| Scale | Train examples | Val loss | MCQ option-text acc | Open F1 | Mean IoU | Loc@0.5 |
-|---:|---:|---:|---:|---:|---:|---:|
-| 5% | 9,379 | 1.1454 | 84.57% | 0.3174 | 0.3020 | 24.96% |
-| 10% | 19,035 | 1.0557 | 89.22% | 0.3320 | 0.3231 | 32.04% |
-| 25% | 47,860 | 1.0021 | 90.62% | 0.3379 | 0.3615 | 37.17% |
-| 50% | 95,544 | 0.9632 | 91.27% | 0.3428 | 0.4419 | 46.90% |
-| **100%** | **190,625** | **0.9309** | **91.54%** | **0.3514** | **0.5831** | **71.15%** |
+All rows use the same **565 grounding examples** within the 10,098-example held-out split. Mean IoU measures box overlap; Localization@0.5 is the fraction of examples with IoU at least 0.5.
 
-The final 100% run reached train loss **1.0020** and validation loss **0.9309**.
+| Model | Adaptation | Mean IoU | Localization@0.5 |
+|---|---|---:|---:|
+| Qwen3-VL 4B | Original | 0.1444 | 16.81% |
+| Qwen3-VL 4B | 100% LoRA | 0.7449 | 86.90% |
+| MedGemma 1.5 4B | Original | 0.0894 | 5.31% |
+| MedGemma 1.5 4B | 100% LoRA | 0.5831 | 71.15% |
 
-### Base MedGemma vs. 100% LoRA
+- Qwen improves **5.16×** over its original mean IoU; MedGemma improves **6.52×** over its own lower baseline.
+- At full data, Qwen's mean IoU is **27.75% higher** than MedGemma's; Localization@0.5 is **15.75 percentage points higher**.
+- These are observed differences without seed repeats, confidence intervals, or significance claims.
 
-| Metric | Base MedGemma | 100% LoRA |
-|---|---:|---:|
-| Strict MCQ label accuracy | 21.94% | 25.22% |
-| MCQ option-text accuracy | 0.67% | 91.54% |
-| MCQ semantic-choice accuracy | 17.59% | **93.52%** |
-| Open-response token F1 | 0.2256 | **0.3514** |
-| Open-response ROUGE-L | 0.1509 | **0.2406** |
-| Detection valid-box rate | 24.78% | **100.00%** |
-| Visual-grounding mean IoU | 0.0894 | **0.5831** |
-| Localization@0.5 | 5.31% | **71.15%** |
+## How much adaptation data is needed?
 
-**MCQ metric nuance.** The fine-tuned model frequently emits the correct option text with an inconsistent symbolic prefix—for example, `A: Kidney` when Kidney is option B. Therefore, 91.54% is specifically **option-text accuracy**, not standard label accuracy. Semantic-choice accuracy resolves a unique question-specific option phrase first and otherwise maps a valid label through that question's choices; unresolved outputs count as incorrect. Strict label accuracy and the 70.15% label/text contradiction rate remain visible rather than being silently reinterpreted.
+![Grounding performance across training-data fractions](docs/assets/research/grounding_scaling.png)
 
-## Data-scaling figures
+| Data | Examples | Qwen IoU | MedGemma IoU | Qwen Loc@0.5 | MedGemma Loc@0.5 |
+|---:|---:|---:|---:|---:|---:|
+| 1% | 1,906 | 0.3673 | — | 33.81% | — |
+| 5% | 9,379 | 0.6143 | 0.3020 | 74.16% | 24.96% |
+| 10% | 19,035 | 0.6585 | 0.3231 | 81.24% | 32.04% |
+| 25% | 47,860 | 0.7006 | 0.3615 | 84.07% | 37.17% |
+| 50% | 95,544 | 0.7258 | 0.4419 | 85.66% | 46.90% |
+| 100% | 190,625 | 0.7449 | 0.5831 | 86.90% | 71.15% |
 
-| Validation | Grounding |
+At 5%, Qwen uses **9,379 examples**, compared with MedGemma's **190,625** at 100%—approximately **20.3× fewer examples** while exceeding both measured grounding endpoints. This is data efficiency under the tested recipe, not a claim of equivalent compute or a precisely estimated sample-complexity ratio. No full-split 1% MedGemma evaluation is available.
+
+Each fraction starts from the original checkpoint, independently. Subsets are nested, image-group-safe, and shared between model families. One epoch means larger fractions also receive more optimizer updates.
+
+## Language results and the MCQ limitation
+
+![QA overlap and diagnostic answer matching](docs/assets/research/language_diagnostics.png)
+
+| Model | Adaptation | QA/open token F1 | Answer-content matching† |
+|---|---|---:|---:|
+| Qwen3-VL 4B | Original | 0.1924 | 12.80% |
+| Qwen3-VL 4B | 100% LoRA | 0.3535 | 93.84% |
+| MedGemma 1.5 4B | Original | 0.1880 | 17.59% |
+| MedGemma 1.5 4B | 100% LoRA | 0.3496 | 93.52% |
+
+† Diagnostic only: choices omitted; not standard MCQ accuracy.
+
+The full-data language scores are close: **0.3535 vs. 0.3496 token F1**, and **93.84% vs. 93.52% diagnostic answer matching**. We do not claim statistical equivalence or clinical correctness. The strong grounding gap does not imply superiority on every task.
+
+The shared input builder kept MCQ options in metadata but did not show them to the model. Consequently, earlier descriptions of low letter accuracy as a model “label-binding failure” were unsupported. Corrected MCQ prompts, target checks, and retraining are required before drawing conventional MCQ conclusions. Grounding scores are not directly invalidated by the omission, although the flawed MCQ training mixture remains part of the recipe.
+
+## Experiment at a glance
+
+| Component | Setting |
 |---|---|
-| ![Validation loss vs training-data scale](docs/assets/validation_loss.png) | ![Mean IoU vs training-data scale](docs/assets/mean_iou.png) |
-| ![Open-response token F1 vs training-data scale](docs/assets/open_response_f1.png) | ![Localization at 0.5 vs training-data scale](docs/assets/localization_at_0_5.png) |
+| Medical model | [`google/medgemma-1.5-4b-it`](https://huggingface.co/google/medgemma-1.5-4b-it) |
+| General model | [`Qwen/Qwen3-VL-4B-Instruct`](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) |
+| Dataset | [SonoInstruct](https://huggingface.co/datasets/Ssdaizi/SonoInstruct); obtained separately |
+| Full training / validation | 190,625 / 10,098 examples |
+| Adaptation | One epoch; BF16; decoder LoRA rank 16, alpha 32, dropout 0.05 |
+| Frozen components | Vision encoder and multimodal projector |
+| Optimization | Seed 42; LR 1e-4; cosine; effective batch 8 on four GPUs |
+| Inference | Greedy; maximum 256 new tokens; native processors and chat templates |
+| Split protection | Connected groups of identical image-byte hashes; no patient-level guarantee |
+| Evaluation counts | 565 grounding; 4,628 QA/open; 4,905 MCQ-labeled diagnostic records |
 
-These are single deterministic runs per scale; no uncertainty intervals were estimated. Machine-readable values are in [`results/scaling_results.csv`](results/scaling_results.csv) and [`results/scaling_results.json`](results/scaling_results.json).
+The 13 reported model/scale combinations were rescored from saved raw generations with one evaluator. Validation IDs, prompts, references, option metadata, and generation settings were checked for consistency. The [aggregate JSON](results/research_results.json) includes metric denominators, source checksums and model revisions. Historical task-routing and pooling differences are corrected in this release.
 
-## Dataset and leakage safeguards
-
-SonoInstruct contains ultrasound understanding, knowledge, report-generation, and grounding instructions. The repository does **not** redistribute its images or text.
-
-The manifest builder hashes original image bytes and constructs connected components across every record sharing an image. Entire components—not flattened QA rows—are assigned to train or validation, preventing image leakage. The 5%→100% subsets are drawn from one seeded component ordering and are strictly nested. Each manifest stores only identifiers and source locators; content is reloaded from the authorized dataset copy.
-
-## Evaluation tasks and metrics
-
-- **MCQ:** strict label accuracy, option-text accuracy, semantic-choice accuracy, validity, label/text consistency, and contradiction rate
-- **QA and open response:** normalized exact match, token F1, and ROUGE-L F1
-- **Visual grounding:** valid/invalid box rate, mean IoU, and Localization@0.5
-- **Auditability:** prompts, references, raw generations, parsed predictions, settings, and grouped metadata are retained locally for offline rescoring
-
-Lexical generation scores are similarity measures, not measures of clinical correctness. See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the exact parsing and aggregation protocol.
-
-## Hardware benchmark
-
-The same MedGemma/LoRA workload, fixed subset, effective batch size eight, and 50 optimizer steps were used on one node per platform.
-
-| Hardware | GPUs | Examples/sec | Relative throughput |
-|---|---:|---:|---:|
-| NVIDIA A100 | 4 | 1.464 | 1.00× |
-| NVIDIA RTX PRO 6000 Blackwell | 4 | 2.959 | **2.02×** |
-
-This is a controlled system benchmark, not a claim of a custom Blackwell kernel. The workload already used fused BF16 attention and fused AdamW in the tested stack.
-
-## Quick start
-
-### 1. Install
-
-Python 3.11 or 3.12 and a CUDA-compatible PyTorch build are recommended.
+## Reproduce the study
 
 ```bash
 git clone https://github.com/jxia622/SonoMed-VLM.git
 cd SonoMed-VLM
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,viz,qwen]'
 ```
 
-Accept the gated MedGemma terms, authenticate with `hf auth login`, and obtain SonoInstruct separately. Configure storage with environment variables; never place tokens in YAML or source files.
+Use a compatible CUDA PyTorch/torchvision pair for GPU work. The CRC runs used torch 2.8.0+cu128, torchvision 0.23.0+cu128, transformers 5.14.1 and peft 0.20.0. Accept MedGemma's gated terms and authenticate with `hf auth login`. Obtain SonoInstruct separately; no dataset images or text are distributed here.
 
 ```bash
 export SONOMED_PROJECT_ROOT="$PWD"
 export SONOINSTRUCT_ROOT="/path/to/SonoInstruct"
-export SONOMED_OUTPUT_ROOT="/path/to/sonomed-outputs"
+export SONOMED_OUTPUT_ROOT="/path/to/outputs"
 export HF_HOME="/path/to/huggingface-cache"
-```
 
-### 2. Inspect data and build manifests
-
-```bash
 python scripts/inspect_dataset.py --data-root "$SONOINSTRUCT_ROOT"
 python scripts/build_manifests.py --data-root "$SONOINSTRUCT_ROOT"
 python scripts/validate_data.py --data-root "$SONOINSTRUCT_ROOT"
 ```
 
-### 3. Load the released adapter
+The following commands reproduce the **historical choices-omitted recipe**. They are not the proposed repaired MCQ experiment. Use the pinned manifests for exact comparisons; see [the CRC guide](docs/QWEN3VL_CRC.md).
 
 ```bash
-python examples/inference.py ultrasound.png \
-  --prompt "Describe the visible anatomy and findings."
-```
+# Full Qwen training; use a fresh output directory.
+torchrun --standalone --nproc_per_node=4 \
+  scripts/train.py --config configs/qwen3vl_train_100pct.yaml --strict-numerics
 
-The script loads the gated MedGemma base model separately, then applies the LoRA adapter from `jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA`.
-
-## Training
-
-The final configuration is pinned in [`configs/rtx6k_train_100pct.yaml`](configs/rtx6k_train_100pct.yaml). Every scale starts independently from the same MedGemma revision; no adapter is continued across scales.
-
-```bash
+# Full MedGemma training.
 torchrun --standalone --nproc_per_node=4 \
   scripts/train.py --config configs/rtx6k_train_100pct.yaml
-```
 
-Important controls include seed 42, assistant-only loss, per-device batch 1, gradient accumulation 2 on four GPUs, rank 16, alpha 32, dropout 0.05, frozen vision/projector parameters, AdamW, a `1e-4` learning rate, and cosine scheduling.
-
-## Evaluation
-
-Generate and score a trained adapter:
-
-```bash
+# Example Qwen adapter evaluation.
 torchrun --standalone --nproc_per_node=4 \
-  scripts/baseline_eval.py \
-  --config configs/rtx6k_eval_100pct.yaml \
-  --adapter "$SONOMED_OUTPUT_ROOT/train_100pct_rtx6k/final_adapter"
+  scripts/baseline_eval.py --config configs/qwen3vl_eval_finetuned.yaml \
+  --adapter "$SONOMED_OUTPUT_ROOT/qwen3vl_100pct/final_adapter"
+
+# Rebuild figures using only the public aggregate results; no GPU needed.
+python scripts/plot_research_results.py
 ```
 
-Re-score existing raw predictions without GPU inference:
+Qwen scale configs cover 1%, 5%, 10%, 25%, and 50%. Slurm examples and `scripts/submit_qwen3vl_scaling.sh` provide the CRC workflow. [Rebuild aggregate results from archived predictions](docs/RESEARCH.md#reproducibility-and-provenance).
 
-```bash
-python scripts/evaluate.py \
-  --predictions /path/to/eval_predictions.jsonl \
-  --output-dir /path/to/corrected-evaluation
-```
+[PNG, SVG and PDF figures](docs/assets/research/) are generated from the same machine-readable source. Raw generations and adapter checkpoints remain in the authorized experiment storage. Only the earlier MedGemma adapter is currently linked as a public model release; Qwen adapter weights are not published by this repository update.
 
-## Repository structure
+## What would strengthen the research?
 
-```text
-configs/                 reproducible training and evaluation configurations
-data/manifests/          generated locally; dataset content is never committed
-docs/                    data, training, evaluation, and release details
-examples/                minimal adapter inference
-results/                 curated aggregate results (no raw predictions)
-scripts/                 manifest, training, evaluation, and plotting entry points
-slurm/                   portable examples for single- and multi-GPU Slurm jobs
-src/sonomed_vlm/         package code
-tests/                   CPU tests plus marked gated/GPU integration tests
-```
+1. Repair MCQ inputs and retrain both families with a versioned protocol.
+2. Add Gemma 3 4B as a closer parent-family control for MedGemma.
+3. Repeat seeds, quantify paired uncertainty, and reserve an untouched external test set.
+4. Control visual token budgets, adapter capacity and tuning budgets; test vision unfreezing.
+5. Evaluate clinical answer quality beyond token overlap.
 
-## Reproducibility
+SonoBench has **not** been evaluated. We could not locate the official test package in the authors' public releases as of 27 September 2026. The [research report](docs/RESEARCH.md) distinguishes completed experiments from proposed follow-ups and situates this study relative to existing medical-adaptation and SonoInstruct work.
 
-- MedGemma revision: `91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b`
-- Dataset split seed: `42`
-- Validation examples: `10,098`
-- Image-group-connected, leakage-safe nested manifests
-- Deterministic generation (`do_sample=false`)
-- Resolved configs, environment metadata, architecture reports, losses, throughput, and compute accounting saved per run
-- Full CPU suite: `41 passed`, with one expected gated/GPU test skipped at release validation
+## Repository map
 
-## Limitations
+| Path | Contents |
+|---|---|
+| `docs/RESEARCH.md` | Question, motivation, hypotheses, methods, findings, caveats and related work |
+| `results/research_results.*` | Current aggregate metrics and provenance |
+| `docs/assets/research/` | Reproducible research figures in PNG/SVG/PDF |
+| `configs/` | Pinned model and data-fraction configurations |
+| `scripts/` | Training, inference, validation, comparison and plotting |
+| `src/sonomed_vlm/` | Dataset, model, training and evaluation implementation |
+| `tests/` | CPU checks and gated/GPU integration tests |
 
-- Evaluation uses one held-out SonoInstruct split and does not establish external clinical validity or generalization across institutions, devices, demographics, or acquisition protocols.
-- Only one deterministic run was completed per scale; variance across seeds was not measured.
-- MCQ label binding remains weak despite high semantic-choice and option-text accuracy.
-- ROUGE-L and token F1 cannot assess factual or clinical safety.
-- Grounding boxes are evaluated after mathematically equivalent normalization from SonoInstruct's `[0,1000]` coordinates.
-- Outputs may be incorrect, incomplete, biased, or unsafe. Expert review is mandatory.
+## License and use
 
-## License and attribution
-
-Project code is Apache-2.0 licensed; see [`LICENSE`](LICENSE). MedGemma is an open-weight model governed by the [Health AI Developer Foundations Terms of Use](https://developers.google.com/health-ai-developer-foundations/terms) and [Prohibited Use Policy](https://developers.google.com/health-ai-developer-foundations/prohibited-use-policy). SonoInstruct is published under Apache-2.0. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
-The LoRA adapter is a MedGemma model derivative and is distributed separately under the HAI-DEF terms. Neither MedGemma base weights nor SonoInstruct data are included here.
-
-## Citation
+Research software only; these experiments do not establish clinical validity. Project code is Apache-2.0 licensed ([LICENSE](LICENSE)). MedGemma and its derivatives remain subject to the [HAI-DEF terms](https://developers.google.com/health-ai-developer-foundations/terms). Consult the upstream Qwen and SonoInstruct releases for their terms. See [third-party notices](THIRD_PARTY_NOTICES.md) and the [MedGemma model card](MODEL_CARD.md).
 
 ```bibtex
 @software{xia2026sonomedvlm,
-  author  = {Jack Xia},
-  title   = {SonoMed-VLM: Parameter-Efficient Ultrasound Domain Adaptation of MedGemma},
-  year    = {2026},
-  url     = {https://github.com/jxia622/SonoMed-VLM},
-  version = {0.1.0}
+  author = {Jack Xia},
+  title = {SonoMed-VLM: Medical and General Vision-Language Models for Ultrasound Adaptation},
+  year = {2026},
+  url = {https://github.com/jxia622/SonoMed-VLM}
 }
 ```

@@ -24,9 +24,8 @@ answering, report-style generation, multiple-choice tasks, and visual grounding.
 It adapts `google/medgemma-1.5-4b-it` on 190,625 training examples from
 SonoInstruct while keeping the vision tower and multimodal projector frozen.
 
-This repository contains **adapter weights only**. It does not contain MedGemma
-base weights, SonoInstruct data, optimizer state, intermediate checkpoints, or
-raw evaluation predictions.
+The released [Hugging Face model repository](https://huggingface.co/jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA) contains adapter weights only. This GitHub repository contains code,
+configs and aggregate research results, not model weights or raw dataset content.
 
 Source code and reproducibility materials are available at
 [jxia622/SonoMed-VLM](https://github.com/jxia622/SonoMed-VLM).
@@ -54,41 +53,40 @@ Source code and reproducibility materials are available at
 
 ## Results
 
+**Updated 27 September 2026:** These values use the common scorer and corrected
+task routing. The MCQ prompts omitted choices during training and inference;
+semantic matching is diagnostic only, not standard MCQ accuracy. See the
+[audit](docs/MCQ_PROMPT_AUDIT_20260927.md) and [Qwen comparison](docs/RESEARCH.md).
+
 | Metric | Result |
 |---|---:|
-| Train loss | 1.0020 |
-| Validation loss | 0.9309 |
-| Strict MCQ label accuracy | 25.22% |
-| MCQ option-text accuracy | 91.54% |
-| MCQ semantic-choice accuracy | 93.52% |
-| MCQ label/text contradiction rate | 70.15% |
-| Open-response token F1 | 0.3514 |
-| Open-response ROUGE-L | 0.2406 |
-| Detection valid-box rate | 100.00% |
+| QA + open-response token F1 | 0.3496 |
+| QA + open-response ROUGE-L | 0.2607 |
 | Visual-grounding mean IoU | 0.5831 |
 | Localization@0.5 | 71.15% |
+| Valid-box rate | 100.00% |
+| Answer-content matching (choices omitted; diagnostic) | 93.52% |
 
-All adapted-model metrics use the same 10,098-example held-out split. MCQ
-metrics apply to 4,905 examples and grounding metrics to 565 examples.
+The split contains 10,098 examples: 565 grounding, 4,628 QA/open, and 4,905
+MCQ-labeled diagnostic examples. One epoch, one seed; no uncertainty intervals.
 
 ### Scaling study
 
-| Scale | Train examples | Val loss | Option-text acc | Open F1 | Mean IoU | Loc@0.5 |
-|---:|---:|---:|---:|---:|---:|---:|
-| 5% | 9,379 | 1.1454 | 84.57% | 0.3174 | 0.3020 | 24.96% |
-| 10% | 19,035 | 1.0557 | 89.22% | 0.3320 | 0.3231 | 32.04% |
-| 25% | 47,860 | 1.0021 | 90.62% | 0.3379 | 0.3615 | 37.17% |
-| 50% | 95,544 | 0.9632 | 91.27% | 0.3428 | 0.4419 | 46.90% |
-| 100% | 190,625 | 0.9309 | 91.54% | 0.3514 | 0.5831 | 71.15% |
+| Data | Examples | QA/open token F1 | Mean IoU | Loc@0.5 |
+|---:|---:|---:|---:|---:|
+| 5% | 9,379 | 0.2914 | 0.3020 | 24.96% |
+| 10% | 19,035 | 0.3144 | 0.3231 | 32.04% |
+| 25% | 47,860 | 0.3237 | 0.3615 | 37.17% |
+| 50% | 95,544 | 0.3383 | 0.4419 | 46.90% |
+| 100% | 190,625 | 0.3496 | 0.5831 | 71.15% |
 
-### MCQ behavior
+### MCQ protocol limitation
 
-The adapter often emits the correct option text with an inconsistent letter
-prefix (for example, `A: Kidney` when Kidney is option B). Therefore 91.54% is
-specifically **option-text accuracy**, not standard MCQ accuracy. The separate
-semantic-choice metric resolves a unique option phrase first and otherwise maps
-a valid label through that question's option list. Strict label accuracy and
-contradiction rate are reported to make this behavior explicit.
+Earlier descriptions attributed label/text contradictions to model label binding.
+That interpretation is unsupported because the model did not receive the choices.
+Presenting choices at inference alone would not repair the training protocol.
+The current published adapter retains this limitation. Corrected retraining remains
+a follow-up experiment.
 
 ### Grounding correction
 
@@ -164,7 +162,7 @@ print(processor.decode(output[0][prompt_length:], skip_special_tokens=True))
 - Evaluation is limited to one SonoInstruct split and does not establish
   external clinical validity across sites, devices, protocols, or populations.
 - One deterministic run was completed per scale; seed variance was not measured.
-- Symbolic MCQ label binding remains poor despite strong semantic answer choice.
+- MCQ choices were omitted during training and inference; standard MCQ conclusions are invalid.
 - Token F1 and ROUGE-L do not measure factual or clinical safety.
 - The adapter can generate incorrect, incomplete, biased, or unsafe responses.
 
