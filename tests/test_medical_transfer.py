@@ -120,3 +120,34 @@ def test_adapter_transition_preserves_weights_and_capacity(tmp_path):
     cfg.lora.rank = 8
     with pytest.raises(ValueError, match="recipe"):
         load_trainable_adapter(LlamaForCausalLM(tiny), cfg, tmp_path / "adapter")
+
+
+def test_submission_dag_gates_all_runs_and_avoids_expired_dependencies(tmp_path, monkeypatch):
+    import csv
+
+    import submit_medical_transfer as submit
+
+    calls = []
+
+    def fake_command(command, **kwargs):
+        if command[0] == "sacct":
+            return "COMPLETED\n"
+        calls.append(command)
+        return f"{50000+len(calls)};gpu\n"
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("SONOMED_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setattr(sys, "argv", ["submit_medical_transfer.py"])
+    monkeypatch.setattr(submit.subprocess, "check_output", fake_command)
+    submit.main()
+    assert len(calls) == 36
+    assert not any(arg.startswith("--dependency") for arg in calls[0])
+    assert all(any(arg.startswith("--dependency=afterok:") for arg in cmd) for cmd in calls[1:])
+    assert not any("4079527" in arg for cmd in calls for arg in cmd)
+    summary_dependency = next(arg for arg in calls[-1] if arg.startswith("--dependency"))
+    assert len(summary_dependency.split(":")) == 36  # afterok + all 35 prior jobs
+    receipt = list(csv.DictReader((tmp_path / "submission-medical-transfer.tsv").open(), delimiter="\t"))
+    assert len(receipt) == 36
+    assert all(row["cluster"] == "gpu" for row in receipt)
+    with pytest.raises(FileExistsError):
+        submit.main()
