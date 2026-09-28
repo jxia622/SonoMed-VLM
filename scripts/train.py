@@ -62,12 +62,14 @@ def main() -> None:
         config.data.root,
         task_filters=config.data.task_filters,
         source_filters=config.data.source_filters,
+        instruction_protocol=config.data.instruction_protocol,
     )
     eval_dataset = ManifestDataset(
         config.data.val_manifest,
         config.data.root,
         task_filters=config.data.task_filters,
         source_filters=config.data.source_filters,
+        instruction_protocol=config.data.instruction_protocol,
     )
     if args.max_eval_examples is not None:
         eval_dataset.records = eval_dataset.records[:args.max_eval_examples]
@@ -100,6 +102,7 @@ def main() -> None:
         metadata.update(
             {
                 "train_examples": len(train_dataset),
+                "instruction_protocol": config.data.instruction_protocol,
                 "max_eval_examples": args.max_eval_examples,
                 "validation_examples": len(eval_dataset),
                 "effective_batch_size": config.training.per_device_batch_size

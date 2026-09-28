@@ -1,0 +1,9 @@
+extends: rtx6k_scaling.yaml
+data:
+  instruction_protocol: open_qa_v2
+  train_manifest: data/manifests-openqa-v2/train.jsonl
+  val_manifest: data/manifests-openqa-v2/val.jsonl
+training:
+  eval_steps: 100000000
+output:
+  run_name: openqa_v2_medgemma_100pct

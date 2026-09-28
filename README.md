@@ -12,6 +12,8 @@ A reproducible comparison of **MedGemma 1.5 4B** and **Qwen3-VL 4B** across trai
 
 > **Research status:** Preliminary, single-seed results on a validation split, not official SonoBench or external clinical results. An audit found that MCQ choices were omitted from both training and inference. MCQ-derived scores below are diagnostic answer matching, **not valid standard MCQ accuracy**. [Read the audit](docs/MCQ_PROMPT_AUDIT_20260927.md).
 
+**Correction in progress:** The [v2 open-ended QA protocol](docs/OPEN_QA_V2.md) removes option labels from training targets and evaluates answer text without candidate choices. New results are pending; the figures below describe the historical v1 recipe.
+
 ## Why compare these models?
 
 Medical knowledge may help ultrasound interpretation, but useful transfer could depend on the task and imaging modality. We ask whether starting from a medically specialized model produces better adaptation and data efficiency than starting from a similarly sized general VLM.

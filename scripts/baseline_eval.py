@@ -78,6 +78,7 @@ def main() -> None:
         config.data.root,
         task_filters=config.data.task_filters,
         source_filters=config.data.source_filters,
+        instruction_protocol=config.data.instruction_protocol,
     )
     model, processor = load_medgemma(config, for_training=distributed)
     if distributed:
@@ -125,6 +126,9 @@ def main() -> None:
             "source_dataset": example.source_dataset,
             "focus": example.focus,
             "prompt": example.user_prompt,
+            "system_prompt": example.system_prompt,
+            "instruction_protocol": config.data.instruction_protocol,
+            "original_task_type": example.metadata.get("original_task_type", example.task_type),
             "ground_truth": example.assistant_response,
             "raw_model_output": raw_output,
             "answer_label": example.metadata.get("answer_label"),
@@ -221,6 +225,7 @@ def main() -> None:
         dataset_revision=resolve_dataset_revision(config.data.root, config.data.val_manifest),
     )
     metadata["evaluated_examples"] = len(rows)
+    metadata["instruction_protocol"] = config.data.instruction_protocol
     metadata["model_name"] = config.model.name
     metadata["adapter_path"] = str(args.adapter.resolve()) if args.adapter else None
     if args.adapter:

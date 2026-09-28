@@ -12,6 +12,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
+from sonomed_vlm.data.open_qa import apply_protocol
 from sonomed_vlm.data.schema import ImageAsset, NormalizedExample, image_group_id
 from sonomed_vlm.utils.io import read_jsonl, sha256_json
 
@@ -203,7 +204,9 @@ class ManifestDataset:
         *,
         task_filters: list[str] | None = None,
         source_filters: list[str] | None = None,
+        instruction_protocol: str = "legacy",
     ) -> None:
+        self.instruction_protocol = instruction_protocol
         self.data_root = Path(data_root).expanduser().resolve()
         tasks = set(task_filters or [])
         sources = set(source_filters or [])
@@ -239,4 +242,4 @@ class ManifestDataset:
             raise ValueError(
                 f"Manifest/source mismatch for {shard}:{row_index}:{qa_index}; rebuild manifests"
             )
-        return example
+        return apply_protocol(example, self.instruction_protocol)

@@ -1,0 +1,9 @@
+extends: qwen3vl_base.yaml
+data:
+  instruction_protocol: open_qa_v2
+  train_manifest: data/manifests-openqa-v2/train_25pct.jsonl
+  val_manifest: data/manifests-openqa-v2/val.jsonl
+training:
+  eval_steps: 100000000
+output:
+  run_name: openqa_v2_qwen_25pct

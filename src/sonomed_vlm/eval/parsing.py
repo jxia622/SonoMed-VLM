@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Any
 
+from sonomed_vlm.data.open_qa import LABEL_ONLY, strip_explicit_label
 from sonomed_vlm.eval.classification import mcq_score
 from sonomed_vlm.eval.generation import exact_match, rouge_l_f1, token_f1
 from sonomed_vlm.eval.grounding import box_iou, parse_box
@@ -15,6 +17,24 @@ def score_prediction(record: dict[str, Any]) -> dict[str, Any]:
     task_type = str(record.get("task_type") or "").casefold()
     task_family = str(record.get("task_family") or "").casefold()
     options = list(record.get("options") or [])
+    if task_type == "open_qa":
+        # Never use candidate options or a letter lookup to score open-ended answers.
+        if not reference.strip():
+            raise ValueError("Open QA requires a nonempty text reference")
+        answer = "" if LABEL_ONLY.fullmatch(raw) else strip_explicit_label(raw)
+        return {
+            "parsed_prediction": answer,
+            "answer_exact_match": float(
+                " ".join(unicodedata.normalize("NFKC", answer).casefold().split()).rstrip(".!?")
+                == " ".join(unicodedata.normalize("NFKC", reference).casefold().split()).rstrip(
+                    ".!?"
+                )
+            ),
+            "answer_token_f1": token_f1(answer, reference),
+            "answer_rouge_l": rouge_l_f1(answer, reference),
+            "answer_empty_or_label_only_rate": float(not answer),
+        }
+
     # Some QA records retain choice metadata. An explicit task label takes
     # precedence; only infer MCQ from options when no task type was supplied.
     if task_type in {"mcq", "multiple_choice", "multiple-choice"} or (not task_type and options):

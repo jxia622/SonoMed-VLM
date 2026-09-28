@@ -47,6 +47,7 @@ class ModelConfig(StrictModel):
 
 class DataConfig(StrictModel):
     root: Path
+    instruction_protocol: Literal["legacy", "open_qa_v2"] = "legacy"
     train_manifest: Path = Path("data/manifests/train_1pct.jsonl")
     val_manifest: Path = Path("data/manifests/val.jsonl")
     num_workers: int = Field(default=4, ge=0)

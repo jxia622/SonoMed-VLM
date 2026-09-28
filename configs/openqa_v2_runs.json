@@ -1,0 +1,130 @@
+[
+  {
+    "name": "openqa_v2_qwen_1pct",
+    "family": "qwen",
+    "scale_pct": 1,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_1pct_eval",
+    "training_dir": "openqa_v2_qwen_1pct"
+  },
+  {
+    "name": "openqa_v2_qwen_5pct",
+    "family": "qwen",
+    "scale_pct": 5,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_5pct_eval",
+    "training_dir": "openqa_v2_qwen_5pct"
+  },
+  {
+    "name": "openqa_v2_qwen_10pct",
+    "family": "qwen",
+    "scale_pct": 10,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_10pct_eval",
+    "training_dir": "openqa_v2_qwen_10pct"
+  },
+  {
+    "name": "openqa_v2_qwen_25pct",
+    "family": "qwen",
+    "scale_pct": 25,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_25pct_eval",
+    "training_dir": "openqa_v2_qwen_25pct"
+  },
+  {
+    "name": "openqa_v2_qwen_50pct",
+    "family": "qwen",
+    "scale_pct": 50,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_50pct_eval",
+    "training_dir": "openqa_v2_qwen_50pct"
+  },
+  {
+    "name": "openqa_v2_qwen_100pct",
+    "family": "qwen",
+    "scale_pct": 100,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_qwen_100pct_eval",
+    "training_dir": "openqa_v2_qwen_100pct"
+  },
+  {
+    "name": "openqa_v2_qwen_original",
+    "family": "qwen",
+    "scale_pct": 0,
+    "kind": "original",
+    "evaluation_dir": "openqa_v2_qwen_original",
+    "training_dir": null
+  },
+  {
+    "name": "openqa_v2_qwen_legacy100",
+    "family": "qwen",
+    "scale_pct": 100,
+    "kind": "legacy100",
+    "evaluation_dir": "openqa_v2_qwen_legacy100",
+    "training_dir": null
+  },
+  {
+    "name": "openqa_v2_medgemma_1pct",
+    "family": "medgemma",
+    "scale_pct": 1,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_1pct_eval",
+    "training_dir": "openqa_v2_medgemma_1pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_5pct",
+    "family": "medgemma",
+    "scale_pct": 5,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_5pct_eval",
+    "training_dir": "openqa_v2_medgemma_5pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_10pct",
+    "family": "medgemma",
+    "scale_pct": 10,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_10pct_eval",
+    "training_dir": "openqa_v2_medgemma_10pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_25pct",
+    "family": "medgemma",
+    "scale_pct": 25,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_25pct_eval",
+    "training_dir": "openqa_v2_medgemma_25pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_50pct",
+    "family": "medgemma",
+    "scale_pct": 50,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_50pct_eval",
+    "training_dir": "openqa_v2_medgemma_50pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_100pct",
+    "family": "medgemma",
+    "scale_pct": 100,
+    "kind": "corrected_adapter",
+    "evaluation_dir": "openqa_v2_medgemma_100pct_eval",
+    "training_dir": "openqa_v2_medgemma_100pct"
+  },
+  {
+    "name": "openqa_v2_medgemma_original",
+    "family": "medgemma",
+    "scale_pct": 0,
+    "kind": "original",
+    "evaluation_dir": "openqa_v2_medgemma_original",
+    "training_dir": null
+  },
+  {
+    "name": "openqa_v2_medgemma_legacy100",
+    "family": "medgemma",
+    "scale_pct": 100,
+    "kind": "legacy100",
+    "evaluation_dir": "openqa_v2_medgemma_legacy100",
+    "training_dir": null
+  }
+]

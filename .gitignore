@@ -74,6 +74,7 @@ results/*
 !results/scaling_results.json
 !results/research_results.csv
 !results/research_results.json
+!results/openqa_v2_audit.json
 
 # Keep repository placeholders
 !data/manifests/.gitkeep

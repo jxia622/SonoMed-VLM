@@ -1,0 +1,3 @@
+extends: openqa_v2_qwen_25pct.yaml
+output:
+  run_name: openqa_v2_qwen_25pct_eval

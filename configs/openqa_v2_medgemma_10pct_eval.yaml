@@ -1,0 +1,3 @@
+extends: openqa_v2_medgemma_10pct.yaml
+output:
+  run_name: openqa_v2_medgemma_10pct_eval

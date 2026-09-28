@@ -1,0 +1,126 @@
+{
+  "conversion_code_sha256": "1442f3bc27c5f5ade86db9a6250cb14feadf5565b0299060f147f53441b9714d",
+  "converted_reference_sha256": "99e8c29b663531669ecc2448fc7a82f312141c3fa861015ec884437578976f8b",
+  "excluded_reasons": {
+    "choice_dependent_answer": 34,
+    "choice_dependent_question": 2855,
+    "incomplete_question": 28,
+    "source_answer_text_conflict": 81
+  },
+  "output_manifests": {
+    "train.jsonl": {
+      "converted_open_qa": 93548,
+      "examples": 187761,
+      "excluded": 2864,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 32,
+        "choice_dependent_question": 2724,
+        "incomplete_question": 27,
+        "source_answer_text_conflict": 81
+      },
+      "sha256": "b2abbc803235556c4678bc94bf2e9c0adf724471263669aec2fca101594eacda"
+    },
+    "train_10pct.jsonl": {
+      "converted_open_qa": 9566,
+      "examples": 18761,
+      "excluded": 274,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 4,
+        "choice_dependent_question": 260,
+        "incomplete_question": 4,
+        "source_answer_text_conflict": 6
+      },
+      "sha256": "c07a1ee87cc1c23b118af68994d254387d9aae9cf30728d0e5096737baa35ca3"
+    },
+    "train_1pct.jsonl": {
+      "converted_open_qa": 983,
+      "examples": 1882,
+      "excluded": 24,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 2,
+        "choice_dependent_question": 20,
+        "incomplete_question": 1,
+        "source_answer_text_conflict": 1
+      },
+      "sha256": "4d3125d609234c10496f453bcba463f870430cb71ff919066ff75686864bfc7e"
+    },
+    "train_25pct.jsonl": {
+      "converted_open_qa": 23739,
+      "examples": 47173,
+      "excluded": 687,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 9,
+        "choice_dependent_question": 659,
+        "incomplete_question": 7,
+        "source_answer_text_conflict": 12
+      },
+      "sha256": "869f87f44ec5ab6a321dd8ca5f7bcb5b468caab503aeabfc7f289d440c762592"
+    },
+    "train_50pct.jsonl": {
+      "converted_open_qa": 47307,
+      "examples": 94118,
+      "excluded": 1426,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 15,
+        "choice_dependent_question": 1369,
+        "incomplete_question": 11,
+        "source_answer_text_conflict": 31
+      },
+      "sha256": "4c24c37eb7356319f0db6360a23c62dd754b298fcea33e57971b6fbba150f899"
+    },
+    "train_5pct.jsonl": {
+      "converted_open_qa": 4630,
+      "examples": 9251,
+      "excluded": 128,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 2,
+        "choice_dependent_question": 118,
+        "incomplete_question": 2,
+        "source_answer_text_conflict": 6
+      },
+      "sha256": "9060d2836f09780f7bd68f6f79f8872c0df855a38009ff0bd0babecb12972750"
+    },
+    "val.jsonl": {
+      "converted_open_qa": 4938,
+      "examples": 9964,
+      "excluded": 134,
+      "exclusion_reasons": {
+        "choice_dependent_answer": 2,
+        "choice_dependent_question": 131,
+        "incomplete_question": 1
+      },
+      "sha256": "ddfeb64ec6766d0475ac2f03148e6aa4d74383d0a849d548df420df62eb4e853"
+    }
+  },
+  "protocol": "open_qa_v2",
+  "source_manifests": {
+    "train.jsonl": {
+      "examples": 190625,
+      "sha256": "b9e03fdee94baa22a098bae466a3ce6c65ebaabc6a9c5f91eb5c297c0040b3f1"
+    },
+    "train_10pct.jsonl": {
+      "examples": 19035,
+      "sha256": "2550f3301bad2469920e28e4dc87b2ac22e4f575021354ba482a342d04898189"
+    },
+    "train_1pct.jsonl": {
+      "examples": 1906,
+      "sha256": "e1fa75f7aaa47c1946a74fcac436ebf83c162c712a728db87aad32272baf3749"
+    },
+    "train_25pct.jsonl": {
+      "examples": 47860,
+      "sha256": "6e2a2cbe3492eeb16257581a56ed5e49b5746f3f707db70ff1579d3081dd0157"
+    },
+    "train_50pct.jsonl": {
+      "examples": 95544,
+      "sha256": "15ccd8e6d4ccb6856894631bd4fa9ba7210ac78f2b349d6294caf9b64c8e56c4"
+    },
+    "train_5pct.jsonl": {
+      "examples": 9379,
+      "sha256": "383d8c33185e5faa557c483173f0fe034c577adaf74da79871ede2b389810085"
+    },
+    "val.jsonl": {
+      "examples": 10098,
+      "sha256": "1c126056347b97d300f32e3becb0008352f45731c982cdd442ae27f4617c95a0"
+    }
+  }
+}
