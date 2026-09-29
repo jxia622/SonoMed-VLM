@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate matched saved runs and publish aggregate-only research results."""
+"""Legacy v1 exporter only; use summarize_open_qa.py for corrected v2 results."""
 
 from __future__ import annotations
 
@@ -21,6 +21,12 @@ def main() -> None:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
+    if (args.output_dir / "research_results.json").exists():
+        existing = json.loads((args.output_dir / "research_results.json").read_text())
+        if existing.get("protocol") == "open_qa_v2":
+            raise ValueError(
+                "Refusing to overwrite corrected v2 results with historical v1 metrics"
+            )
     manifest = list(read_jsonl(args.manifest))
     ids = [row["example_id"] for row in manifest]
     manifest_hash = sha256_file(args.manifest)

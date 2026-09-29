@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the four release figures from the curated scaling summary."""
+"""Rebuild historical v1-only figures; use plot_research_results.py for current results."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ def main() -> None:
     import matplotlib.pyplot as plt
 
     project_root = Path(__file__).resolve().parents[1]
-    source = project_root / "results" / "scaling_results.csv"
-    output_dir = project_root / "docs" / "assets"
+    source = project_root / "results" / "archive" / "v1_scaling_results.csv"
+    output_dir = project_root / "docs" / "assets" / "archive-v1"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with source.open(newline="", encoding="utf-8") as handle:
@@ -35,7 +35,7 @@ def main() -> None:
     for filename, (label, values) in series.items():
         figure, axis = plt.subplots(figsize=(6.4, 4.0), constrained_layout=True)
         axis.plot(scales, values, color="#2563EB", marker="o", linewidth=2.3, markersize=6)
-        axis.set_title(f"{label} vs. training-data scale")
+        axis.set_title(f"Historical v1: {label}")
         axis.set_xlabel("Training-data scale (%)")
         axis.set_ylabel(label)
         axis.set_xticks(scales)

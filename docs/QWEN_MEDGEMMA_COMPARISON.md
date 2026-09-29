@@ -1,5 +1,7 @@
 # Four-model held-out comparison
 
+> Historical v1 procedure/results. Current corrected results and all six fractions are in [the open-QA-v2 research report](RESEARCH.md).
+
 > **MCQ protocol limitation:** Question-specific choices were omitted from model inputs.
 > These metrics are diagnostic only; see [the audit](MCQ_PROMPT_AUDIT_20260927.md).
 > The current results and interpretation are in [the research report](RESEARCH.md).

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate all experiment outputs and write per-run and paired seed comparisons."""
 
+import argparse
 import csv
 import json
 from collections import defaultdict
@@ -16,9 +17,14 @@ from sonomed_vlm.utils.io import read_jsonl, sha256_file, sha256_json, write_jso
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--seeds", type=int, nargs="+", choices=[42, 43, 44], default=[42, 43, 44])
+    seeds = parser.parse_args().seeds
+    if len(set(seeds)) != len(seeds):
+        raise ValueError("Seeds must be unique")
     results = []
     reference = {}
-    for seed in [42, 43, 44]:
+    for seed in seeds:
         for arm in ["direct", "medical", "general"]:
             for fraction in [1, 10, 100]:
                 name = f"{arm}_seed{seed}_{fraction}pct"
@@ -80,7 +86,7 @@ def main():
                     )
     diagnostics = []
     for name in ["original"] + [
-        f"{arm}_seed{seed}_intermediate" for seed in [42, 43, 44] for arm in ["medical", "general"]
+        f"{arm}_seed{seed}_intermediate" for seed in seeds for arm in ["medical", "general"]
     ]:
         for domain in ["medical", "general"]:
             directory = OUT / (name + "_" + domain + "_test")
@@ -119,7 +125,7 @@ def main():
             "domain": d,
             "metric": m,
             "mean": mean(v),
-            "seed_sd": stdev(v),
+            "seed_sd": stdev(v) if len(v) > 1 else None,
             "n_seeds": len(v),
         }
         for (a, f, d, m), v in sorted(grouped.items())
@@ -129,11 +135,11 @@ def main():
     for comparator in ["direct", "general"]:
         for fraction in [1, 10, 100]:
             for domain in ["ultrasound", "medical", "general"]:
-                for metric in lookup["medical", 42, fraction, domain]:
+                for metric in lookup["medical", seeds[0], fraction, domain]:
                     differences = [
                         lookup["medical", s, fraction, domain][metric]
                         - lookup[comparator, s, fraction, domain][metric]
-                        for s in [42, 43, 44]
+                        for s in seeds
                     ]
                     paired.append(
                         {
@@ -142,7 +148,7 @@ def main():
                             "domain": domain,
                             "metric": metric,
                             "mean_difference": mean(differences),
-                            "seed_sd": stdev(differences),
+                            "seed_sd": stdev(differences) if len(differences) > 1 else None,
                             "seed_differences": differences,
                         }
                     )
@@ -156,7 +162,9 @@ def main():
             "seed_summary": summary,
             "paired_comparisons": paired,
             "data_audit_sha256": sha256_file(DATA / "audit.json"),
-            "limitations": "Internal ultrasound validation; three seeds; lexical QA metrics are not clinical accuracy; no significance claim from seed SD.",
+            "seeds": seeds,
+            "status": "single_seed_pilot" if len(seeds) == 1 else "multi_seed_experiment",
+            "limitations": "Internal ultrasound validation; lexical QA metrics are not clinical accuracy. A single-seed pilot has no seed uncertainty estimate; seed SD is not a significance test.",
         },
     )
     with (target / "seed_summary.csv").open("w", newline="") as f:
@@ -166,7 +174,13 @@ def main():
     lines = [
         "# Medical intermediate-training experiment",
         "",
-        "Mean across three seeds ± sample SD. Internal validation; open-ended lexical scores, not MCQ accuracy.",
+        f"Seeds: {seeds}. "
+        + (
+            "Single-seed pilot; no seed SD or significance claim."
+            if len(seeds) == 1
+            else "Mean ± sample SD."
+        )
+        + " Internal validation; lexical scores, not MCQ accuracy.",
         "",
         "| Fraction | Arm | Open-QA exact match | Open-QA token F1 | Grounding IoU |",
         "|---|---|---:|---:|---:|",
@@ -176,10 +190,13 @@ def main():
             cells = []
             for metric in ["answer_exact_match", "answer_token_f1", "iou"]:
                 values = grouped[arm, fraction, "ultrasound", metric]
-                cells.append(f"{mean(values):.4f} ± {stdev(values):.4f}")
+                cells.append(
+                    f"{mean(values):.4f}"
+                    + (f" ± {stdev(values):.4f}" if len(values) > 1 else " (n=1)")
+                )
             lines.append(f"| {fraction}% | {arm} | " + " | ".join(cells) + " |")
     (target / "results.md").write_text("\n".join(lines) + "\n")
-    print("Verified 27 downstream comparisons and all knowledge diagnostics.")
+    print(f"Verified {9 * len(seeds)} downstream comparisons and all knowledge diagnostics.")
 
 
 if __name__ == "__main__":

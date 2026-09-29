@@ -81,3 +81,7 @@ results/*
 
 # Keep repository placeholders
 !data/manifests/.gitkeep
+
+submission-medical-transfer-pilot.tsv
+!results/archive/
+!results/archive/*

@@ -51,42 +51,28 @@ Source code and reproducibility materials are available at
 | Seed | 42 |
 | Effective batch | 8 on 4 GPUs |
 
-## Results
+## Results and weight version
 
-**Updated 27 September 2026:** These values use the common scorer and corrected
-task routing. The MCQ prompts omitted choices during training and inference;
-semantic matching is diagnostic only, not standard MCQ accuracy. See the
-[audit](docs/MCQ_PROMPT_AUDIT_20260927.md) and [Qwen comparison](docs/RESEARCH.md).
+**This card describes the published historical v1 adapter (190,625 training examples).**
+The corrected open-QA-v2 research runs are separate adapters; the Hugging Face weights
+linked above have not been replaced. See [the complete corrected study](docs/RESEARCH.md).
 
-| Metric | Result |
-|---|---:|
-| QA + open-response token F1 | 0.3496 |
-| QA + open-response ROUGE-L | 0.2607 |
-| Visual-grounding mean IoU | 0.5831 |
-| Localization@0.5 | 71.15% |
-| Valid-box rate | 100.00% |
-| Answer-content matching (choices omitted; diagnostic) | 93.52% |
+Evaluated with the corrected v2 prompt on the common 9,964-example split, this
+historical full-data MedGemma adapter is the `openqa_v2_medgemma_legacy100` bridge:
 
-The split contains 10,098 examples: 565 grounding, 4,628 QA/open, and 4,905
-MCQ-labeled diagnostic examples. One epoch, one seed; no uncertainty intervals.
+| Metric | Published v1 adapter, evaluated under v2 | Newly trained v2 adapter |
+|---|---:|---:|
+| Converted open-QA exact match (4,938) | 91.13% | 91.29% |
+| Converted open-QA token F1 | 0.9237 | 0.9273 |
+| Ordinary QA/open token F1 (4,461) | 0.3440 | 0.3430 |
+| Mean grounding IoU (565) | 0.5828 | 0.5716 |
+| Localization@0.5 | 71.68% | 68.67% |
 
-### Scaling study
-
-| Data | Examples | QA/open token F1 | Mean IoU | Loc@0.5 |
-|---:|---:|---:|---:|---:|
-| 5% | 9,379 | 0.2914 | 0.3020 | 24.96% |
-| 10% | 19,035 | 0.3144 | 0.3231 | 32.04% |
-| 25% | 47,860 | 0.3237 | 0.3615 | 37.17% |
-| 50% | 95,544 | 0.3383 | 0.4419 | 46.90% |
-| 100% | 190,625 | 0.3496 | 0.5831 | 71.15% |
-
-### MCQ protocol limitation
-
-Earlier descriptions attributed label/text contradictions to model label binding.
-That interpretation is unsupported because the model did not receive the choices.
-Presenting choices at inference alone would not repair the training protocol.
-The current published adapter retains this limitation. Corrected retraining remains
-a follow-up experiment.
+One seed; internal validation, not MCQ accuracy or clinical correctness. The new
+adapter trained on 187,761 retained examples. Training targets and filtering changed
+together. The historical adapter's training omitted MCQ choices while retaining
+letter-bearing targets; a new evaluation prompt does not repair that training.
+[Historical metrics](results/archive/README.md) · [Protocol correction](docs/OPEN_QA_V2.md).
 
 ### Grounding correction
 

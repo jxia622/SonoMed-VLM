@@ -26,7 +26,11 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=root / "docs/assets/research")
     args = parser.parse_args()
     data = json.loads(args.source.read_text())
-    models = {m["name"]: m for m in data["models"]}
+    if data.get("protocol") != "open_qa_v2" or len(data["models"]) != 16:
+        raise ValueError("Expected the complete 16-run corrected open-QA-v2 release")
+    models = {
+        f"{m['family']}_{m['scale_pct']}pct": m for m in data["models"] if m["kind"] != "legacy100"
+    }
     args.output_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update(
         {
@@ -52,7 +56,7 @@ def main():
         fig.text(
             0.06,
             0.94,
-            "SONOMED-VLM  /  RESEARCH RESULTS",
+            "SONOMED-VLM  /  CORRECTED OPEN-QA V2",
             fontsize=10,
             weight="bold",
             color=COLORS["qwen"],
@@ -129,7 +133,7 @@ def main():
         "Qwen reaches stronger grounding with less data",
         "Independent adapters at each fraction  |  Same nested training subsets and evaluation set",
         "Training fraction uses a logarithmic axis. Lines connect measured runs; no fitted extrapolation.\n"
-        "MedGemma 1% was not evaluated on the full split. One seed; data efficiency is not compute equivalence.",
+        "All six fractions completed for both models. One seed; data efficiency is not compute equivalence.",
     )
     for ax, metric, title in zip(
         axes,
@@ -139,7 +143,11 @@ def main():
     ):
         for family in ["qwen", "medgemma"]:
             records = sorted(
-                [m for m in data["models"] if m["family"] == family and m["scale_pct"] > 0],
+                [
+                    m
+                    for m in data["models"]
+                    if m["family"] == family and m["kind"] == "corrected_adapter"
+                ],
                 key=lambda m: m["scale_pct"],
             )
             x = [m["scale_pct"] for m in records]
@@ -179,19 +187,23 @@ def main():
 
     fig, axes = frame(
         "Language metrics show a much smaller separation",
-        "QA/open response: 4,628 examples  |  MCQ-labeled diagnostic subset: 4,905 examples",
-        "WARNING: MCQ choices were omitted in training and inference; answer matching is not standard MCQ accuracy.\n"
+        "Ordinary QA/open: 4,461 examples  |  Converted open-QA: 4,938 examples",
+        "Corrected answer-text targets; no candidate options shown. Open-QA exact match is not MCQ accuracy.\n"
         "Token F1 measures lexical overlap, not clinical correctness. One seed per scale; no uncertainty intervals.",
     )
     for ax, metric, title in zip(
         axes,
-        ["token_f1", "semantic_choice_accuracy"],
-        ["QA + open-response token F1", "Answer-content matching · diagnostic only"],
+        ["token_f1", "answer_exact_match"],
+        ["QA + open-response token F1", "Converted open-QA exact match"],
         strict=True,
     ):
         for family in ["qwen", "medgemma"]:
             records = sorted(
-                [m for m in data["models"] if m["family"] == family and m["scale_pct"] > 0],
+                [
+                    m
+                    for m in data["models"]
+                    if m["family"] == family and m["kind"] == "corrected_adapter"
+                ],
                 key=lambda m: m["scale_pct"],
             )
             ax.plot(
@@ -212,11 +224,52 @@ def main():
         ax.set_xlabel("Training-data fraction (%)", labelpad=9)
         ax.set_title(title, loc="left")
         ax.legend(loc="lower right", frameon=False, fontsize=10)
-        if metric == "semantic_choice_accuracy":
-            ax.set_facecolor("#FFF9F0")
+        if metric == "answer_exact_match":
             ax.yaxis.set_major_formatter(PercentFormatter(1))
     save(fig, "language_diagnostics")
-    print(f"Wrote 3 figures as PNG, SVG, and PDF to {args.output_dir}")
+    fig, axes = frame(
+        "Retraining changes more than the evaluation prompt",
+        "Full-data adapters  |  Historical and corrected training, both evaluated with open-QA v2",
+        "Bridge controls keep the evaluation protocol fixed. Training targets, filtering and sample counts change together.\n"
+        "The corrected MedGemma adapter has lower observed grounding; correction does not guarantee score improvements.",
+    )
+    for ax, metric, title in zip(
+        axes,
+        ["answer_exact_match", "iou"],
+        ["Converted open-QA exact match", "Mean intersection-over-union"],
+        strict=True,
+    ):
+        for i, family in enumerate(["qwen", "medgemma"]):
+            legacy = next(
+                m for m in data["models"] if m["family"] == family and m["kind"] == "legacy100"
+            )
+            for j, record in enumerate([legacy, models[f"{family}_100pct"]]):
+                value = record["overall"][metric]
+                x = i + (j - 0.5) * 0.34
+                ax.bar(x, value, width=0.28, color=COLORS[family], alpha=0.35 if j == 0 else 1)
+                ax.text(
+                    x,
+                    value + 0.025,
+                    f"{value:.2%}" if metric == "answer_exact_match" else f"{value:.4f}",
+                    ha="center",
+                    fontsize=11,
+                )
+                ax.text(
+                    x,
+                    -0.075,
+                    "Legacy" if j == 0 else "Corrected",
+                    ha="center",
+                    fontsize=9,
+                    color=MUTED,
+                )
+        ax.set_xticks([0, 1], [NAMES["qwen"], NAMES["medgemma"]])
+        ax.tick_params(axis="x", pad=26, length=0)
+        ax.set_ylim(0, 1.05)
+        ax.set_title(title, loc="left")
+        if metric == "answer_exact_match":
+            ax.yaxis.set_major_formatter(PercentFormatter(1))
+    save(fig, "correction_bridge")
+    print(f"Wrote 4 figures as PNG, SVG, and PDF to {args.output_dir}")
 
 
 if __name__ == "__main__":

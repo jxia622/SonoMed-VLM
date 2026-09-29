@@ -2,8 +2,9 @@
 
 This experiment answers ultrasound questions without showing candidate answers.
 Converted targets contain answer text, never an A/B/C/D identifier. This is a
-new task protocol, not a relabeling of the old MCQ accuracy numbers. Results are
-pending; the published v1 results remain explicitly historical.
+new task protocol, not a relabeling of the old MCQ accuracy numbers. All 16 evaluations completed successfully on 28 September 2026. The
+[corrected research release](RESEARCH.md) publishes all results and figures;
+[v1 exports](../results/archive/README.md) remain explicitly historical.
 
 ## Correction
 

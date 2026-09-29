@@ -1,19 +1,19 @@
 # Does medical specialization improve ultrasound adaptation?
 
-**Research report · 27 September 2026 · Preliminary, single-seed empirical study**
+**Corrected open-QA-v2 research report · 29 September 2026 · Single-seed empirical study**
 
 ## Research question
 
 At a similar nominal model size, does a medically specialized vision-language model
-provide better ultrasound adaptation and data efficiency than a general-purpose
-vision-language model under the same decoder-LoRA training recipe? Does the answer
-differ between spatial grounding and language output?
+provide better ultrasound adaptation and data efficiency than a general-purpose model
+under the same decoder-LoRA recipe? Does the answer differ by grounding and language task?
 
-We compare `google/medgemma-1.5-4b-it` with
-`Qwen/Qwen3-VL-4B-Instruct`. “Original” means the released instruction-tuned
-checkpoint before our ultrasound adaptation, not an untrained or pretrained-only model.
+We compare `Qwen/Qwen3-VL-4B-Instruct` and `google/medgemma-1.5-4b-it`.
+“Original” means their released instruction-tuned checkpoints before our adaptation.
+All 16 corrected evaluations completed; no intermediate-training pilot results are included.
 
 ## Motivation and competing explanations
+
 
 We began with MedGemma because medical specialization might provide useful clinical
 knowledge and image representations. Our motivating concern was whether experience
@@ -41,124 +41,142 @@ Qwen versus MedGemma changes all of these factors together. It does not identify
 the causal effect of medical QA pretraining. A closer control is Gemma 3 4B versus
 MedGemma, supplemented by controlled pretraining ablations if accessible.
 
-## Study design
+
+## Corrected study design
+
+The earlier experiment omitted candidate options while retaining letter-bearing targets
+and option-aware scoring. The replacement protocol is deliberately **open-ended QA**:
+no candidate answers, answer-text targets, and no predicted-letter lookup. Ambiguous or
+choice-dependent records are excluded. Both models were retrained independently from
+their original checkpoints at every fraction. This repairs training and evaluation;
+it does not relabel old answer-matching scores as new accuracy.
+[Full conversion specification](OPEN_QA_V2.md) · [Original audit](MCQ_PROMPT_AUDIT_20260927.md).
 
 | Factor | Protocol |
 |---|---|
-| Adaptation data | SonoInstruct; 190,625 examples in the full training manifest |
-| Evaluation | Same 10,098-example held-out validation split for every reported run |
-| Task denominators | 565 grounding; 4,628 QA/open; 4,905 MCQ-labeled diagnostic records |
-| Qwen fractions | 1%, 5%, 10%, 25%, 50%, 100%, plus original checkpoint |
-| MedGemma fractions | 5%, 10%, 25%, 50%, 100%, plus original checkpoint |
-| Initialization | Each fraction starts independently from its family's pinned checkpoint |
-| Optimization | One epoch, seed 42, AdamW, LR 1e-4, cosine schedule, warmup 0.03, weight decay 0.01 |
-| Effective batch | 8: four GPUs × batch one × two accumulation steps |
-| Adaptation | BF16; decoder LoRA rank 16, alpha 32, dropout 0.05; vision/projector frozen |
-| LoRA targets | Decoder q/k/v/o and gate/up/down projections |
-| Generation | Greedy, maximum 256 new tokens, native model chat templates |
-| Qwen image budget | Native processor capped at 1,048,576 pixels |
-| Hardware | Four RTX PRO 6000 Blackwell GPUs for the scale runs |
+| Full training | 187,761 retained SonoInstruct examples |
+| Fractions, both models | 1%, 5%, 10%, 25%, 50%, 100% |
+| Retained counts | 1,882 / 9,251 / 18,761 / 47,173 / 94,118 / 187,761 |
+| Validation | 9,964: 4,938 converted open-QA; 4,461 ordinary QA/open; 565 grounding |
+| Additional controls | Two original models; two historical full-data adapters under the new evaluation protocol |
+| Optimization | One epoch, seed 42, AdamW, LR 1e-4, cosine, warmup 0.03, weight decay 0.01 |
+| Effective batch | Eight: four GPUs × one example × two accumulation steps |
+| Adapter | BF16, rank 16, alpha 32, dropout 0.05, decoder q/k/v/o and gate/up/down |
+| Frozen components | Vision tower and multimodal projector |
+| Generation | Greedy, maximum 256 new tokens, native chat templates |
+| Qwen image budget | Native processor, maximum 1,048,576 pixels |
+| Hardware | Four RTX PRO 6000 Blackwell GPUs per training run |
 
-The nominal fractions contain **1,906 / 9,379 / 19,035 / 47,860 / 95,544 /
-190,625** examples. Fractions are approximate because image-connected groups stay
-together. The training subsets are nested. Original image-byte hashes link records
-into components before splitting, preventing identical-image leakage under that
-hash definition. This is not a guarantee against near duplicates, shared patients,
-or source-level overlap. No patient-disjoint or external-site claim is made.
+Filtering excludes 2,864 training and 134 validation records. The nominal fractions
+refer to original nested, image-connected subsets, filtered without resampling.
+Identical-image byte hashes prevent overlap under that definition; near duplicates,
+shared patients and shared sources can remain. No patient/site-disjoint claim is made.
+Both 1% results use full validation generation, not a smoke subset.
 
-The 1% Qwen result comes from the new full-evaluation run, not the earlier smoke
-check (128 validation examples and eight generated answers). There is no comparable
-full-split 1% MedGemma result; we leave that cell empty.
+Training uses 33,030,144 adapter parameters for Qwen and 29,802,496 for MedGemma.
+The common recipe does not equalize FLOPs, visual tokens, adapter capacity, or each
+family's optimal hyperparameters. More data at one epoch means more updates.
+Training loss is not a cross-tokenizer quality ranking.
 
-The common recipe controls examples and several hyperparameters, but does not
-match FLOPs, visual-token counts, trainable-parameter counts, or model-specific
-optimal hyperparameters. At one epoch, more examples also mean more optimizer
-updates. This study therefore measures data scaling under a fixed-epoch recipe,
-not a pure data effect at fixed compute. Losses use different tokenizers and are
-not treated as a cross-model quality ranking. Recorded trainable adapter counts
-are 33,030,144 for Qwen and 29,802,496 for MedGemma. The post-injection total
-parameter counts are 4,470,845,952 and 4,329,881,968 respectively; “4B” is a
-nominal model-size class, not exact parameter equality.
+## Original versus adapted models
 
-## Results: visual grounding
+![Grounding comparison](assets/research/grounding_comparison.png)
 
-![Grounding before and after adaptation](assets/research/grounding_comparison.png)
+| Model | Adaptation | Open-QA exact match | Open-QA token F1 | Ordinary QA F1 | Mean IoU | Loc@0.5 |
+|---|---|---:|---:|---:|---:|---:|
+| Qwen3-VL 4B | Original | 4.56% | 0.0948 | 0.1980 | 0.1444 | 16.81% |
+| Qwen3-VL 4B | Corrected 100% | 91.13% | 0.9261 | 0.3511 | 0.7496 | 87.08% |
+| MedGemma 1.5 4B | Original | 5.00% | 0.0808 | 0.1928 | 0.0815 | 4.78% |
+| MedGemma 1.5 4B | Corrected 100% | 91.29% | 0.9273 | 0.3430 | 0.5716 | 68.67% |
 
-| Model | Adaptation | Mean IoU | Localization@0.5 |
-|---|---|---:|---:|
-| Qwen3-VL 4B | Original | 0.1444 | 16.81% |
-| Qwen3-VL 4B | 100% LoRA | 0.7449 | 86.90% |
-| MedGemma 1.5 4B | Original | 0.0894 | 5.31% |
-| MedGemma 1.5 4B | 100% LoRA | 0.5831 | 71.15% |
+At full data, Qwen reaches **0.7496 mean IoU versus 0.5716** for MedGemma:
+an absolute difference of **0.1780**, or **31.14%** relative.
+Localization@0.5 is **87.08% versus 68.67%**
+(**18.41 percentage points**).
+Qwen improves 5.19× over its original mean IoU;
+MedGemma improves 7.01× over its lower baseline.
+These are observed differences, not significance claims.
 
-At 100% data, Qwen's mean IoU is **0.7449 versus 0.5831**, an absolute difference
-of **0.1618** and a relative increase of **27.75%**. Localization@0.5 is **86.90%
-versus 71.15%**, a **15.75 percentage-point** difference. Relative to their own
-original checkpoints, Qwen reaches **5.16×** mean IoU and MedGemma reaches **6.52×**.
-A larger multiplier from a lower baseline does not imply a higher final score.
+## Data scaling
 
-![Grounding learning curves](assets/research/grounding_scaling.png)
+![All six corrected grounding fractions](assets/research/grounding_scaling.png)
 
 | Data | Examples | Qwen IoU | MedGemma IoU | Qwen Loc@0.5 | MedGemma Loc@0.5 |
 |---:|---:|---:|---:|---:|---:|
-| 1% | 1,906 | 0.3673 | — | 33.81% | — |
-| 5% | 9,379 | 0.6143 | 0.3020 | 74.16% | 24.96% |
-| 10% | 19,035 | 0.6585 | 0.3231 | 81.24% | 32.04% |
-| 25% | 47,860 | 0.7006 | 0.3615 | 84.07% | 37.17% |
-| 50% | 95,544 | 0.7258 | 0.4419 | 85.66% | 46.90% |
-| 100% | 190,625 | 0.7449 | 0.5831 | 86.90% | 71.15% |
+| 1% | 1,882 | 0.3857 | 0.1871 | 36.11% | 13.27% |
+| 5% | 9,251 | 0.5989 | 0.3257 | 68.67% | 27.43% |
+| 10% | 18,761 | 0.6745 | 0.3423 | 81.77% | 33.63% |
+| 25% | 47,173 | 0.7007 | 0.3878 | 83.36% | 40.71% |
+| 50% | 94,118 | 0.7374 | 0.4150 | 87.08% | 45.84% |
+| 100% | 187,761 | 0.7496 | 0.5716 | 87.08% | 68.67% |
 
-Qwen has higher observed mean IoU and Localization@0.5 at every shared tested
-training fraction. At **5% (9,379 examples)**, Qwen reaches **0.6143 mean IoU**
-and **74.16% Localization@0.5**, exceeding MedGemma's full-data observations
-(**0.5831**, **71.15%**, 190,625 examples). This uses approximately **20.3× fewer
-training examples**. Five percent is the first tested Qwen fraction that exceeds
-that endpoint; the exact crossing point is unknown. This is not a demonstrated
-20× compute saving or a statistical significance claim.
+Qwen has higher observed IoU and Localization@0.5 at every matched fraction.
+Qwen 5% exceeds full-data MedGemma on mean IoU (0.5989 vs. 0.5716), while their
+Localization@0.5 is equal (68.67%, 388/565). The example-count ratio is
+187,761/9,251 = 20.3, not an equal-compute comparison. Five percent is the first
+tested Qwen fraction above that IoU endpoint; no interpolated threshold is claimed.
 
-## Results: language output and the MCQ audit
+## Language results
 
-![Language metrics and explicitly provisional answer matching](assets/research/language_diagnostics.png)
+![Corrected language scaling](assets/research/language_diagnostics.png)
 
-| Model | Adaptation | QA/open token F1 | Answer-content matching† |
-|---|---|---:|---:|
-| Qwen3-VL 4B | Original | 0.1924 | 12.80% |
-| Qwen3-VL 4B | 100% LoRA | 0.3535 | 93.84% |
-| MedGemma 1.5 4B | Original | 0.1880 | 17.59% |
-| MedGemma 1.5 4B | 100% LoRA | 0.3496 | 93.52% |
+At full data, converted open-QA exact match slightly favors MedGemma (91.29% vs.
+91.13%), as does converted token F1 (0.9273 vs. 0.9261). Ordinary QA token F1 favors
+Qwen (0.3511 vs. 0.3430). These small differences do not establish statistical
+superiority, equivalence, or clinical quality. Qwen's grounding advantage is not
+an across-the-board language advantage. Open-QA exact match is not MCQ accuracy.
 
-† Diagnostic only: choices omitted; not standard MCQ accuracy.
+## All 16 evaluations
 
-At full data, pooled QA/open token F1 is **0.3535 for Qwen versus 0.3496 for
-MedGemma**. Diagnostic semantic matching is **93.84% versus 93.52%**. These small
-observed differences do not establish superiority, equivalence, or clinical quality.
-The grounding advantage should not be described as an across-the-board win.
+| Model | Training | Open-QA EM | Open-QA F1 | Ordinary QA F1 | Mean IoU | Loc@0.5 |
+|---|---|---:|---:|---:|---:|---:|
+| Qwen3-VL 4B | Corrected 1% | 65.39% | 0.6650 | 0.2743 | 0.3857 | 36.11% |
+| Qwen3-VL 4B | Corrected 5% | 84.29% | 0.8563 | 0.3119 | 0.5989 | 68.67% |
+| Qwen3-VL 4B | Corrected 10% | 88.54% | 0.8994 | 0.3233 | 0.6745 | 81.77% |
+| Qwen3-VL 4B | Corrected 25% | 90.58% | 0.9206 | 0.3330 | 0.7007 | 83.36% |
+| Qwen3-VL 4B | Corrected 50% | 91.15% | 0.9257 | 0.3420 | 0.7374 | 87.08% |
+| Qwen3-VL 4B | Corrected 100% | 91.13% | 0.9261 | 0.3511 | 0.7496 | 87.08% |
+| Qwen3-VL 4B | Original | 4.56% | 0.0948 | 0.1980 | 0.1444 | 16.81% |
+| Qwen3-VL 4B | Legacy 100% bridge | 86.84% | 0.8829 | 0.3483 | 0.7449 | 86.90% |
+| MedGemma 1.5 4B | Corrected 1% | 68.27% | 0.6923 | 0.2533 | 0.1871 | 13.27% |
+| MedGemma 1.5 4B | Corrected 5% | 84.65% | 0.8579 | 0.3060 | 0.3257 | 27.43% |
+| MedGemma 1.5 4B | Corrected 10% | 88.98% | 0.9024 | 0.3147 | 0.3423 | 33.63% |
+| MedGemma 1.5 4B | Corrected 25% | 90.68% | 0.9207 | 0.3255 | 0.3878 | 40.71% |
+| MedGemma 1.5 4B | Corrected 50% | 91.29% | 0.9269 | 0.3316 | 0.4150 | 45.84% |
+| MedGemma 1.5 4B | Corrected 100% | 91.29% | 0.9273 | 0.3430 | 0.5716 | 68.67% |
+| MedGemma 1.5 4B | Original | 5.00% | 0.0808 | 0.1928 | 0.0815 | 4.78% |
+| MedGemma 1.5 4B | Legacy 100% bridge | 91.13% | 0.9237 | 0.3440 | 0.5828 | 71.68% |
 
-**The MCQ recipe has a known input defect.** Choices were stored in metadata but
-not appended to model inputs during either training or inference. An audit of all
-4,905 fine-tuned Qwen MCQ prompts found none containing all the literal options.
-The evaluator could access choices the model did not see. The semantic score
-therefore describes answer-content matching under that protocol, not standard MCQ
-accuracy. The approximately 70% label/text contradiction rate cannot be presented
-as evidence of weak model label binding. See [the evidence and consequences](MCQ_PROMPT_AUDIT_20260927.md).
+Every row uses the same corrected evaluation protocol. “Legacy 100% bridge” means
+an old, uncorrected-training adapter evaluated under v2, not corrected retraining.
+These two controls are excluded from the learning curves.
 
-Grounding inputs are not directly affected by missing MCQ choices. Nevertheless,
-MCQ examples participated in the shared training mixture, so corrected retraining
-could change even the grounding results. Existing runs remain a documented historical
-recipe; no evaluation-only patch can retroactively repair their training inputs.
+![Historical adapter versus corrected retraining](assets/research/correction_bridge.png)
 
-## What this study supports
+Under the same v2 evaluation, Qwen's corrected retraining raises open-QA exact match
+from 86.84% to 91.13% and IoU from 0.7449 to 0.7496. MedGemma's exact match changes
+from 91.13% to 91.29%, but IoU decreases from 0.5828 to 0.5716. A protocol correction
+need not improve every score. Training targets, filtering and sample counts changed
+together, so this bridge does not isolate their individual effects. V1 semantic
+answer matching used a different task/scorer and must not be compared numerically
+with v2 exact match as an accuracy gain. [V1 archive](../results/archive/README.md).
 
-**Within this split and training recipe, medical specialization was not sufficient
-to outperform the general Qwen model on ultrasound grounding. Qwen achieved higher
-observed grounding scores with fewer training examples.**
+## Interpretation
 
-This supports testing transfer at the task and modality level. It does not show
-that medical QA pretraining is useless, that MedGemma overfit CT/MRI, or that Qwen
-will outperform MedGemma on other medical tasks. Qwen already had a stronger
-original grounding score, and it improved further after adaptation.
+Within this split and recipe, medical specialization was not sufficient to beat
+Qwen on ultrasound grounding. This does not show that medical knowledge is useless,
+that MedGemma overfit CT/MRI, or that Qwen wins on other medical tasks. The original
+Qwen already grounded better, and the cross-family comparison cannot isolate why.
 
-## Related work and the contribution
+Our [controlled follow-up](MEDICAL_INTERMEDIATE_TRANSFER.md) starts from the same
+Qwen checkpoint: direct ultrasound adaptation versus MedQA intermediate instruction
+tuning versus token/update-matched general QA intermediate tuning. The selected
+budget is a one-seed pilot (42), with 1%, 10%, and 100% downstream branches.
+It tests additional medical training beyond Qwen's existing knowledge. No result
+from that experiment is asserted here, and one seed cannot estimate seed variance.
+
+## Related work and contribution
+
 
 Jeong et al. compared medically adapted models with their parent models and found
 that specialization did not consistently improve medical QA, including after
@@ -175,57 +193,57 @@ metrics and documenting a consequential evaluation defect. A stronger research
 claim requires the additional controls below. We make no first-in-the-literature
 claim and do not present this repository as a completed causal study.
 
-## Limitations and experiments needed
 
-| Open issue | Required follow-up | What it would resolve |
-|---|---|---|
-| Missing MCQ choices | Version a corrected prompt/target protocol; check labels and option permutations; retrain and evaluate consistently | Valid MCQ conclusions |
-| Cross-family confounding | Add Gemma 3 4B; compare against MedGemma under matched tuning budgets | A closer estimate of medical-specialization benefit |
-| Single seed and one split | Repeat training seeds; paired uncertainty estimates grouped by image/patient where available | Stability and uncertainty of differences |
-| Validation reused throughout development | Freeze protocol, then evaluate untouched source/patient/external data | Generalization beyond this validation set |
-| Native visual budgets and different adapters | Measure and control visual tokens, trainable capacity, and compute; test frozen/unfrozen vision | Sources of the grounding advantage |
-| One epoch and fixed LR | Comparable per-family tuning budget, epoch sensitivity, fixed-update controls | Recipe robustness and optimization confounding |
-| Lexical language metrics | Blinded expert review or validated task-specific scoring | Clinical correctness and hallucination assessment |
+## Limitations and remaining experiments
 
-**SonoBench status:** none of these results are official SonoBench scores. On
-27 September 2026, we checked the [official repository](https://github.com/ShiDaizi/SonoInstruct)
-and [Hugging Face release](https://huggingface.co/datasets/Ssdaizi/SonoInstruct/tree/main)
-but could not locate the official test package or executable evaluator. Obtaining
-those resources and checking overlap is a next step, not an experiment already run.
+| Limitation | Needed evidence |
+|---|---|
+| Cross-family confounding | Parent-family Gemma control and same-backbone intermediate-training contrast |
+| One seed | Repeated seeds and paired/group-aware uncertainty |
+| Internal validation used during development | Untouched external/source-disjoint evaluation |
+| Different processors and capacity | Visual-token, adapter-capacity and compute controls |
+| One fixed epoch/LR | Matched tuning budget and epoch/update sensitivity |
+| Lexical reference matching | Expert-reviewed clinical correctness and hallucinations |
+
+The missing-option/letter-target defect is addressed by the completed open-QA-v2
+retraining. This does not turn the task into standard MCQ evaluation. Single-reference
+matching can penalize valid synonyms; conversion heuristics still need clinical review.
+None of these results are official SonoBench scores; its test package has not been evaluated.
 
 ## Reproducibility and provenance
 
-The public release contains aggregate results and code, not raw prompts, reference
-answers, ultrasound images, or model weights. Each run in
-[`research_results.json`](../results/research_results.json) records prediction,
-metadata and config hashes, model revisions, metric denominators, and per-task,
-source and focus aggregates. Raw artifacts remain in the authorized CRC storage.
+[Aggregate JSON](../results/research_results.json) records all 16 run identifiers,
+metric denominators, per-task/source/focus aggregates, and prediction-file SHA-256s.
+[CSV](../results/research_results.csv) contains the headline metric columns.
+The published files are byte-for-byte copies of the verified CRC summary outputs.
+Raw prompts, references, images, checkpoints and private environments remain off GitHub.
 
 - Qwen revision: `ebb281ec70b05090aa6165b016eac8ec08e71b17`
 - MedGemma revision: `91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b`
-- Validation manifest SHA-256: `1c126056347b97d300f32e3becb0008352f45731c982cdd442ae27f4617c95a0`
-- Qwen scale jobs: 4060375 (1%), 4060376 (5%), 4060377 (10%), 4060378 (25%), 4060379 (50%); all completed successfully.
-- Full comparison uses the original and 100% Qwen generations from the prior matched evaluation; MedGemma generations are reused and rescored.
+- Validation manifest SHA-256: `ddfeb64ec6766d0475ac2f03148e6aa4d74383d0a849d548df420df62eb4e853`
+- Run registry: [`configs/openqa_v2_runs.json`](../configs/openqa_v2_runs.json)
+- Conversion audit: [`results/openqa_v2_audit.json`](../results/openqa_v2_audit.json)
+- CRC output collection: `openqa-v2-20260927`; summary job `4079535`, completed 28 September 2026.
 
-The exporter rejects duplicate/missing IDs, mismatched manifests, question/reference/
-option/task metadata, and inconsistent generation settings. It recomputes scores
-from raw output instead of trusting cached scores. Explicit task labels take
-precedence over option metadata; 167 QA examples carrying choices remain QA.
-This changes historical task denominators and pooled language metrics.
+The aggregator verifies complete unique IDs, matching prompts/references/protocols/
+generation settings, adapter identity for corrected training runs, and the frozen
+validation manifest. It recomputes scores from raw generations rather than cached
+score fields. Configs, metadata and raw prediction artifacts remain in CRC storage.
 
 ```bash
-# Aggregate archived raw runs locally or on CRC; CPU only.
-python scripts/build_research_results.py \
-  --runs configs/research_runs.json \
-  --outputs-root /path/to/sonomed-vlm-outputs \
-  --manifest data/manifests/val.jsonl \
-  --output-dir results
+# After training/evaluation described in OPEN_QA_V2.md; no GPU inference here.
+python scripts/summarize_open_qa.py \
+  --outputs-root /path/to/openqa-v2-20260927 \
+  --manifest data/manifests-openqa-v2/val.jsonl \
+  --runs configs/openqa_v2_runs.json
 
-# Rebuild every research figure from the public aggregate file.
+# Publish the verified summary/results.json and .csv as results/research_results.*.
+# Figures use only public aggregate metrics.
 python -m pip install -e '.[viz]'
 python scripts/plot_research_results.py
 ```
 
-See [training and CRC setup](QWEN3VL_CRC.md), [evaluation details](EVALUATION.md),
-and [the matched-comparison checks](QWEN_MEDGEMMA_COMPARISON.md). PNGs are embedded
-for GitHub; SVG and PDF versions are alongside them for reuse.
+The historical exporter `build_research_results.py` is v1-only and refuses to
+overwrite an existing v2 JSON. PNG, SVG and PDF figures are available in
+[`docs/assets/research`](assets/research). The public Hugging Face adapter still
+contains legacy v1 weights; corrected v2 weights have not been published there.

@@ -12,4 +12,4 @@
 #SBATCH --error=logs/%x-%j.err
 set -euo pipefail
 cd "${SONOMED_PROJECT_ROOT:?}"
-"${SONOMED_PYTHON:?}" scripts/summarize_medical_transfer.py
+"${SONOMED_PYTHON:?}" scripts/summarize_medical_transfer.py "$@"

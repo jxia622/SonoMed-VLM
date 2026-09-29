@@ -1,70 +1,51 @@
-# Evaluation protocol
+# Evaluation — corrected open-QA v2
 
-SonoMed-VLM uses deterministic generation and preserves each prompt, reference,
-raw output, parsed output, generation setting, task family, source, and focus.
-Saved JSONL outputs can therefore be re-scored without loading a model.
+The current [research release](RESEARCH.md) contains 16 verified evaluations on the
+same 9,964-example internal validation manifest. See [the protocol](OPEN_QA_V2.md)
+for conversion and training, and [the audit](../results/openqa_v2_audit.json) for hashes.
 
-> **2026-09-27 protocol audit:** All published runs used MCQ prompts without the
-> question-specific answer choices. These scores are diagnostic answer matching,
-> not conventional MCQ accuracy. See [the audit](MCQ_PROMPT_AUDIT_20260927.md).
-> Grounding is not directly affected by this omission.
+## Task-specific metrics
 
-## Multiple choice
+| Subset | Count | Metrics |
+|---|---:|---|
+| Converted open-ended QA | 4,938 | Answer-text exact match, token F1, ROUGE-L; empty/label-only rate |
+| Ordinary QA/open response | 4,461 | Token F1, ROUGE-L, normalized exact match |
+| Visual grounding | 565 | Mean IoU, Localization@0.5, valid/invalid box rate |
 
-The evaluator retains these separate diagnostic metrics for the historical protocol:
+Converted questions show no candidate answers. Targets contain verified answer text,
+never A/B/C/D labels. Case/whitespace normalization and a final sentence terminator
+are tolerated; inequality signs and decimal points are preserved. An explicit option
+prefix can be stripped mechanically, but a letter-only prediction receives zero credit.
+The scorer never looks up a predicted letter in hidden candidates. These are open-QA
+metrics, not standard MCQ accuracy. Lexical overlap is not clinical correctness.
 
-- **Strict label accuracy:** the emitted A/B/C/D label matches the gold label.
-- **Option-text accuracy:** the emitted answer text matches the correct option
-  after lowercase, whitespace, prefix, and harmless-punctuation normalization.
-- **Semantic-choice accuracy:** a unique question-specific option phrase is
-  resolved first; otherwise a valid explicit label is mapped to the associated
-  option. Unresolved outputs count as incorrect.
-- **Label/text consistency:** label and text refer to the same option.
-- **Contradiction rate:** label and text resolve to different options.
-- **Valid-response rate:** at least one supported representation is parseable.
+Grounding uses the common parser and normalization for SonoInstruct's [0,1000]
+coordinate convention. IoU is intersection area divided by union area; Localization@0.5
+is the fraction with IoU at least 0.5. Invalid/missing boxes receive zero IoU and remain
+in the denominator. Means are per example, not pixel- or patient-weighted.
 
-Option text takes precedence only for the separate semantic-choice metric. A
-contradiction such as `A: Kidney`, when Kidney is option B, can be semantically
-correct while remaining strictly wrong and contradictory. Existing strict and
-option-text metrics are never overwritten.
+All generation is greedy with a 256-new-token cap. Each model retains its native
+chat template and image processor. Thus equal output settings do not equalize visual
+compute or tokenization. No checkpoint is selected using these generation scores.
 
-## Open response and QA
+## Integrity checks and aggregation
 
-Free-response records receive normalized exact match and token F1. Report-like
-outputs additionally receive ROUGE-L F1. These lexical metrics measure overlap,
-not clinical correctness, factuality, or safety.
+`check_open_qa_run.py` verifies IDs, prompts, targets, options absence for converted
+records, manifest hashes and saved adapter provenance. `summarize_open_qa.py` compares
+input signatures across all registered runs and recomputes scores from raw output.
+The public JSON includes denominators, prediction SHA-256s, task/source/focus breakdowns.
+Do not pool converted-QA exact match and ordinary-QA token F1 into a single accuracy.
 
-## Visual grounding
+The 12 corrected adapters, two originals, and two legacy-adapter bridge controls all
+use the same v2 validation protocol. Only corrected adapters enter learning curves.
+Each full curve uses seed 42; no uncertainty or significance estimate is available.
+Identical-image-connected train/validation separation is not patient/site separation.
+These are not official SonoBench or external clinical results.
 
-SonoInstruct serializes bounding boxes in a `[0,1000]` coordinate convention.
-The evaluator accepts that convention, normalizes both reference and prediction
-to `[0,1]` for mathematically equivalent scoring, and reports:
+## Historical protocol
 
-- valid-box and invalid-box rates;
-- mean intersection-over-union (IoU);
-- Localization@0.5, the fraction with IoU at least 0.5.
-
-The original evaluator incorrectly accepted only `[0,1]` input coordinates.
-Release results were regenerated with the corrected parser and stored separately
-from the original artifacts.
-
-## Aggregation
-
-Metrics are aggregated only over applicable records and are available overall,
-by task family, task type, focus, and source. The release split contains 10,098
-examples: 4,905 MCQ-labeled records, 4,628 QA/open responses, and 565 grounding examples.
-Explicit task labels take precedence over option metadata; 167 QA records with
-options remain QA. Historical summaries used different routing and pooling; use
-[the common-scorer research results](../results/research_results.json).
-
-Generate outputs with `scripts/baseline_eval.py`, or re-score saved outputs:
-
-```bash
-python scripts/evaluate.py \
-  --predictions /path/to/eval_predictions.jsonl \
-  --output-dir /path/to/corrected-evaluation
-```
-
-External benchmarks must remain outside training, and test data must not be used
-for hyperparameter selection. Licensing and task compatibility must be verified
-before adding a benchmark.
+The earlier v1 recipe omitted choices while preserving letter targets and option-aware
+answer matching. Its archived metrics are diagnostic only. See [the original audit](MCQ_PROMPT_AUDIT_20260927.md)
+and [historical exports](../results/archive/README.md). V1 and v2 language denominators
+and scorers differ; their percentages are not interchangeable. The original published
+Hugging Face adapter remains a v1 adapter, even when evaluated with v2 prompts.
