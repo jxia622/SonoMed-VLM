@@ -123,14 +123,20 @@ def parameter_report(model: Any) -> ParameterReport:
 def load_trainable_adapter(model, config, path):
     """Continue one adapter, never stack adapters or increase trainable capacity."""
     from peft import PeftConfig, PeftModel
+    from peft.tuners.tuners_utils import check_target_module_exists
 
     saved = PeftConfig.from_pretrained(path)
     expected = find_decoder_lora_targets(model, config.lora.target_modules)
+    # PEFT may compact full paths to equivalent suffixes when saving. Compare
+    # actual selected modules, including any unexpected vision-module matches.
+    resolved_targets = {
+        name for name, _ in model.named_modules() if check_target_module_exists(saved, name)
+    }
     if (
         saved.r != config.lora.rank
         or saved.lora_alpha != config.lora.alpha
         or saved.lora_dropout != config.lora.dropout
-        or set(saved.target_modules) != set(expected)
+        or resolved_targets != set(expected)
         or saved.base_model_name_or_path != config.model.name
         or saved.modules_to_save
         or saved.bias != "none"

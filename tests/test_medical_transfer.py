@@ -111,12 +111,24 @@ def test_adapter_transition_preserves_weights_and_capacity(tmp_path):
             with torch.no_grad():
                 p.fill_(0.123)
     original.save_pretrained(tmp_path / "adapter")
+    # Reproduce PEFT 0.20's compact target serialization.
+    import json
+
+    adapter_config = tmp_path / "adapter/adapter_config.json"
+    saved = json.loads(adapter_config.read_text())
+    saved["target_modules"] = cfg.lora.target_modules
+    adapter_config.write_text(json.dumps(saved))
     restored, _ = load_trainable_adapter(LlamaForCausalLM(tiny), cfg, tmp_path / "adapter")
     assert parameter_report(restored).trainable == parameter_report(original).trainable
     for n, p in restored.named_parameters():
         if p.requires_grad:
             assert "lora_" in n
             assert torch.allclose(p, torch.full_like(p, 0.123))
+    unsafe = LlamaForCausalLM(tiny)
+    unsafe.visual = torch.nn.Module()
+    unsafe.visual.q_proj = torch.nn.Linear(32, 32)
+    with pytest.raises(ValueError, match="recipe"):
+        load_trainable_adapter(unsafe, cfg, tmp_path / "adapter")
     cfg.lora.rank = 8
     with pytest.raises(ValueError, match="recipe"):
         load_trainable_adapter(LlamaForCausalLM(tiny), cfg, tmp_path / "adapter")
