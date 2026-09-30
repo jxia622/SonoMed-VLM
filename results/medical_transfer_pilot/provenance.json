@@ -1,0 +1,49 @@
+{
+  "release_date": "2026-09-30",
+  "status": "completed_single_seed_pilot",
+  "training_source_commit": "ab4d51010886eeb7941bd5dd7b0d2be763097b64",
+  "output_collection": "medical-transfer-20260929",
+  "data_audit_sha256": "5bc1f0c6d9ea09cc771637212f0fbdd6d417f2bcc16a0dc419f7cae245a77ca8",
+  "source_files_sha256": {
+    "results.json": "d19cc045ae95e865475eed009e4de1345566579dc9f584b111d1c718065225d4",
+    "results.md": "046e48a2ba096d20614ce626ff37ff1e179ac2e257b41e433cc9ca2f119fdcd3",
+    "seed_summary.csv": "d601c947cb24db4f2fddbafb230a4681f9a5e276a4d90313f639107fe89c1783"
+  },
+  "jobs": [
+    {
+      "job_id": 4100749,
+      "arm": "direct",
+      "state": "COMPLETED",
+      "elapsed": "00:12:45"
+    },
+    {
+      "job_id": 4100750,
+      "arm": "medical",
+      "state": "COMPLETED",
+      "elapsed": "10:19:16"
+    },
+    {
+      "job_id": 4100751,
+      "arm": "general",
+      "state": "COMPLETED",
+      "elapsed": "10:11:04"
+    },
+    {
+      "job_id": 4100752,
+      "arm": "summary",
+      "state": "COMPLETED",
+      "elapsed": "00:00:42"
+    }
+  ],
+  "notes": "The CRC summary verifies all nine downstream checkpoints across three evaluation domains and six original/intermediate diagnostic evaluations. Direct seed-42 ultrasound adapters/evaluations are reused from openqa-v2-20260927. Job durations exclude queue wait; direct duration does not include prior baseline training. No model weights or raw question/image data are published.",
+  "published_files_sha256": {
+    "results.json": "d19cc045ae95e865475eed009e4de1345566579dc9f584b111d1c718065225d4",
+    "results.md": "046e48a2ba096d20614ce626ff37ff1e179ac2e257b41e433cc9ca2f119fdcd3",
+    "seed_summary.csv": "b7be12755f9e8929c43d1ba5a5a3eec96ac808da74dd8a1053627e8f3c82e4b0",
+    "evaluation_metrics.csv": "44b29889844c3849470ca270cd867864fd75ee25425f2606c9e6f5dc4f5d6334"
+  },
+  "transformations": {
+    "seed_summary.csv": "CRLF line endings normalized to LF; field values unchanged.",
+    "evaluation_metrics.csv": "Flat export generated from results.json by plot_medical_transfer_results.py."
+  }
+}

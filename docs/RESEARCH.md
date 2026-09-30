@@ -10,7 +10,9 @@ under the same decoder-LoRA recipe? Does the answer differ by grounding and lang
 
 We compare `Qwen/Qwen3-VL-4B-Instruct` and `google/medgemma-1.5-4b-it`.
 “Original” means their released instruction-tuned checkpoints before our adaptation.
-All 16 corrected evaluations completed; no intermediate-training pilot results are included.
+All 16 corrected cross-family evaluations completed. The tables below retain that
+study; the separate same-Qwen intermediate-training pilot also completed and is
+summarized under Interpretation, with a [dedicated report](MEDICAL_INTERMEDIATE_TRANSFER.md).
 
 ## Motivation and competing explanations
 
@@ -172,8 +174,17 @@ Our [controlled follow-up](MEDICAL_INTERMEDIATE_TRANSFER.md) starts from the sam
 Qwen checkpoint: direct ultrasound adaptation versus MedQA intermediate instruction
 tuning versus token/update-matched general QA intermediate tuning. The selected
 budget is a one-seed pilot (42), with 1%, 10%, and 100% downstream branches.
-It tests additional medical training beyond Qwen's existing knowledge. No result
-from that experiment is asserted here, and one seed cannot estimate seed variance.
+It tests additional medical training beyond Qwen's existing knowledge. All nine
+pilot checkpoints and the final summary completed on 30 September 2026.
+
+At full ultrasound data, direct / medical-first / general-first open-QA exact match
+is **91.13% / 91.33% / 91.19%**; mean grounding IoU is **0.7496 / 0.7449 / 0.7437**.
+Medical-first improves exact match over both controls at 10% and 100%, while direct
+tuning has higher mean IoU at all three fractions. These are small, mixed observed
+effects. The pilot does not demonstrate consistent overall benefit, statistical
+equivalence, or a lack of medical understanding. One seed cannot estimate seed variance.
+The [full report](MEDICAL_INTERMEDIATE_TRANSFER.md) includes all nine results,
+medical/general diagnostics, matched-control limitations and source hashes.
 
 ## Related work and contribution
 

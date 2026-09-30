@@ -85,3 +85,6 @@ results/*
 submission-medical-transfer-pilot.tsv
 !results/archive/
 !results/archive/*
+
+!results/medical_transfer_pilot/
+!results/medical_transfer_pilot/*

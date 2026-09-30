@@ -7,7 +7,7 @@ nested ultrasound subsets and decoder LoRA training recipe.
 
 [Research report](docs/RESEARCH.md) · [All 16 results (CSV)](results/research_results.csv) ·
 [Aggregate metrics and hashes (JSON)](results/research_results.json) ·
-[Corrected protocol](docs/OPEN_QA_V2.md) · [Controlled follow-up](docs/MEDICAL_INTERMEDIATE_TRANSFER.md)
+[Corrected protocol](docs/OPEN_QA_V2.md) · [Completed medical-training pilot](docs/MEDICAL_INTERMEDIATE_TRANSFER.md)
 
 **Corrected release · 29 September 2026.** All 16 open-QA-v2 evaluations are complete:
 six freshly trained data fractions per model, two original models, and two historical
@@ -34,9 +34,9 @@ Qwen cannot be assumed to lack medical knowledge.
 [MedGemma model card](https://huggingface.co/google/medgemma-1.5-4b-it).
 
 This comparison changes architectures, processors and pretraining together. It does
-not isolate the causal effect of medical knowledge. Our [next experiment](docs/MEDICAL_INTERMEDIATE_TRANSFER.md)
+not isolate the causal effect of medical knowledge. Our [completed controlled experiment](docs/MEDICAL_INTERMEDIATE_TRANSFER.md)
 keeps Qwen fixed and compares direct ultrasound tuning with medical and general QA
-intermediate tuning. It is queued as a **one-seed pilot**, with no results yet.
+intermediate tuning. The **one-seed pilot completed on 30 September 2026**; its results are below.
 
 ## Original versus adapted models
 
@@ -95,15 +95,43 @@ At full data, converted open-QA token F1 is **0.9261 Qwen / 0.9273 MedGemma**;
 ordinary QA token F1 is **0.3511 / 0.3430**. Small single-seed differences do not
 establish superiority or equivalence. [All 16 rows and bridge analysis](docs/RESEARCH.md#all-16-evaluations).
 
+## Does additional medical QA training help Qwen?
+
+**Completed 30 September 2026:** We kept the Qwen3-VL 4B checkpoint fixed and
+compared direct ultrasound tuning with medical-QA-first and general-QA-first tuning.
+All nine arm/fraction combinations (1%, 10%, 100%) and their diagnostics finished.
+The general control matches intermediate example counts, supervised-answer tokens,
+and optimizer updates; total sequence tokens match within the prescribed tolerance.
+
+![Observed medical-training effects versus both controls](docs/assets/medical-transfer/paired_differences.png)
+
+| Training path, 100% ultrasound data | Open-QA exact match | Open-QA F1 | Mean grounding IoU | Loc@0.5 |
+|---|---:|---:|---:|---:|
+| Direct ultrasound | 91.13% | 0.9261 | **0.7496** | 87.08% |
+| Medical QA → ultrasound | **91.33%** | **0.9283** | 0.7449 | **87.43%** |
+| General QA → ultrasound | 91.19% | 0.9277 | 0.7437 | 86.55% |
+
+Medical-first gives higher answer exact match than both controls at 10% and 100%,
+but direct tuning has higher mean IoU at every tested fraction. The full-data
+answer-match difference versus direct is only **+0.20 percentage points**.
+**Additional MedQA instruction tuning shows no consistent overall improvement
+in this single-seed pilot.** This does not establish that medical knowledge is
+useless, that the model is overfitting, or that its predictions lack reasoning.
+
+[All nine ultrasound results, knowledge diagnostics and methods](docs/MEDICAL_INTERMEDIATE_TRANSFER.md) ·
+[All 33 evaluations (CSV)](results/medical_transfer_pilot/evaluation_metrics.csv) ·
+[Verified aggregate JSON](results/medical_transfer_pilot/results.json)
+
 ## Reproduce and inspect
 
 ```bash
 python -m pip install -e '.[viz]'
 python scripts/plot_research_results.py
+python scripts/plot_medical_transfer_results.py
 ```
 
-The plotting script reads the public aggregate JSON and rebuilds four figures in
-PNG, SVG and PDF. [Training and aggregation instructions](docs/OPEN_QA_V2.md),
+The plotting scripts read the public aggregate JSON files and rebuild four
+cross-family figures plus three pilot figures in PNG, SVG and PDF. [Training and aggregation instructions](docs/OPEN_QA_V2.md),
 [evaluator definitions](docs/EVALUATION.md), and [CRC setup](docs/QWEN3VL_CRC.md)
 cover reproduction. Both models use one epoch, seed 42, rank-16 decoder LoRA,
 frozen vision/projector, LR 1e-4, and effective batch eight; their native image
@@ -116,7 +144,7 @@ processors and adapter parameter counts differ.
 | Conversion counts and manifest hashes | [Audit](results/openqa_v2_audit.json) |
 | Corrected training/evaluation run registry | [Run specifications](configs/openqa_v2_runs.json) |
 | Prior v1 numbers, explicitly historical | [Archive](results/archive/README.md) |
-| Medical intermediate-training pilot | [Design and compute plan](docs/MEDICAL_INTERMEDIATE_TRANSFER.md) |
+| Medical intermediate-training pilot | [Completed results and methods](docs/MEDICAL_INTERMEDIATE_TRANSFER.md) |
 | Published historical MedGemma adapter | [Model card](MODEL_CARD.md), [Hugging Face weights](https://huggingface.co/jxia58/SonoMed-VLM-MedGemma-1.5-4B-LoRA) |
 
 The Hugging Face adapter still contains **historical v1 weights**, not the corrected

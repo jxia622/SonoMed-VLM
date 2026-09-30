@@ -49,3 +49,17 @@ answer matching. Its archived metrics are diagnostic only. See [the original aud
 and [historical exports](../results/archive/README.md). V1 and v2 language denominators
 and scorers differ; their percentages are not interchangeable. The original published
 Hugging Face adapter remains a v1 adapter, even when evaluated with v2 prompts.
+
+## Completed same-Qwen intermediate-training pilot
+
+The separate [medical-training pilot](MEDICAL_INTERMEDIATE_TRANSFER.md) reuses the
+same 9,964-example corrected ultrasound validation set. Three arms × three fractions
+produce nine downstream checkpoints; each is also evaluated on 500 held-out medical
+and 500 general text questions. Original Qwen and the two intermediate checkpoints
+add six diagnostic evaluations, for 33 evaluation records total.
+
+The final aggregation job completed successfully and verified identical inputs within
+each domain. The [pilot JSON](../results/medical_transfer_pilot/results.json) is
+separate from the 16-run cross-family release. Seed 42 only; standard deviations
+remain null. These text diagnostics are open-ended adaptations of MedQA and SQuAD,
+not their original benchmark protocols or measures of clinical correctness.
