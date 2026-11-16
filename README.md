@@ -41,11 +41,19 @@ Converted questions are answered **without options**, using answer-text targets.
 
 Qwen has the highest observed grounding score in this comparison. Gemma does not outperform MedGemma at 5%, so this experiment does not establish the initial hypothesis that a general Gemma model adapts more easily.
 
+![Three-model comparison from the interview deck](docs/assets/interview/three-model-comparison.svg)
+
+*From the presentation: gray = before, crimson = after 5% SFT. MedGemma/Qwen before and after answer-match scores use different protocols and must not be interpreted as controlled gains. The table above is the matched after-SFT comparison.*
+
 ### Data scaling
 
 In the corrected full-data study, Qwen reaches **0.7496 mean IoU**, versus **0.5716** for MedGemma. Converted answer-text exact match is **91.13% / 91.29%**, respectively. Qwen at 5% reaches 0.5989 IoU, compared with full-data MedGemma's 0.5716. Larger fractions also receive more optimizer updates; this is not a matched-compute comparison.
 
 [Full scaling tables, figures, and methods](docs/RESEARCH.md) · [Machine-readable results](results/research_results.json)
+
+![Historical MedGemma and Qwen scaling from the interview deck](docs/assets/interview/historical-data-scaling.svg)
+
+*The presentation graph shows the historical choices-omitted series, not the corrected results quoted above. Its MCQ panel reports semantic answer matching, not standard MCQ accuracy. See the [figure notes](docs/assets/interview/README.md) for protocol details.*
 
 ### RSI: a negative result
 
