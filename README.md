@@ -57,6 +57,8 @@ In the corrected full-data study, Qwen reaches **0.7496 mean IoU**, versus **0.5
 
 ### RSI: a negative result
 
+![RSI flow: 5% Qwen warm start, critic training, unlabeled sampling, filtering, and LoRA SFT over four rounds](docs/assets/interview/rsi-training-flow.svg)
+
 Four rounds of CoEvol-style self-training did **not** improve the 5% Qwen warm start. Open-response BERTScore F1 fell from **0.7694** to **0.7202** with critic filtering and **0.7350** with random selection. The critic arm was below the random arm at every round. This is evidence against this particular recipe, not against every self-improvement method.
 
 ### Robustness: images matter, and text contributes

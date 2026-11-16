@@ -2,6 +2,8 @@
 
 ## Iterative self-training from 5% Qwen SFT
 
+![RSI flow: 5% Qwen warm start, critic training, unlabeled sampling, filtering, and LoRA SFT over four rounds](assets/interview/rsi-training-flow.svg)
+
 We tested CoEvol-style alternating critic and generator training, referred to as RSI in the project. The aim was to use additional unlabeled image-question pairs to close the gap between a 5% supervised warm start and full SFT.
 
 The rank-8 Qwen warm start used 5% labeled data. Each of four rounds used 979 disjoint labeled open-response critic seeds and 3,000 fresh questions from a cleaned 74,389-question pool, excluding image connections to the 5% seed and the selector-gate questions. References for the unlabeled pool were hidden. The post-critic model sampled three answers per question; the critic arm kept deduplicated answers with P(M) > 0.55 and continued SFT on the same adapter.

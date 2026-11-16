@@ -6,3 +6,5 @@ Extracted from the inline SVG charts in slides 3 and 4 of `Jack_Xia_Interview_De
 - [Historical scaling](historical-data-scaling.svg): the historical v1 choices-omitted series with 4,905 MCQ-source items, 4,628 ordinary QA/open items, and 565 boxes. This is distinct from the corrected open_qa_v2 comparison. The chart's semantic-choice scores are answer-match diagnostics. One seed per point; no confidence intervals.
 
 The [study guide](../../STUDY.md) explains protocol boundaries. SVG files retain vector text and scale without raster blur on GitHub.
+
+- [RSI training flow](rsi-training-flow.svg): slide 5, converted from HTML-positioned nodes and SVG connectors into a standalone SVG. Node positions, model colors, arrows, loop, threshold, and round count are retained. “Real” is clarified as “reference” answers; the title and footer distinguish experimental design from completed outcomes. The paper attribution is retained.
