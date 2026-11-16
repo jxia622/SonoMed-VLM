@@ -1,6 +1,6 @@
 # RSI and robustness experiments
 
-## Iterative self-training from 5% Qwen SFT
+## RSI research in progress: iterative self-training from 5% Qwen SFT
 
 ![RSI flow: 5% Qwen warm start, critic training, unlabeled sampling, filtering, and LoRA SFT over four rounds](assets/interview/rsi-training-flow.svg)
 
@@ -10,7 +10,7 @@ The rank-8 Qwen warm start used 5% labeled data. Each of four rounds used 979 di
 
 The random arm also included critic training, but randomly selected eligible answers in counts determined by its own critic's acceptance count. Thus it controls selection within the evolving pipeline; the two arms do not have identical accepted counts or trajectories. Provenance labels distinguish reference from generated answers, not verified correctness.
 
-### Completed results
+### Interim results from the initial four-round experiment
 
 Open-response multilingual BERTScore F1 on 434 development examples:
 
@@ -24,7 +24,7 @@ Open-response multilingual BERTScore F1 on 434 development examples:
 
 The separate full-SFT reference scored 0.7835. Neither arm improved the seed; both declined each round, and critic filtering was consistently below random selection. This recipe did not close the supervised-data gap. At round 4, the critic arm retained 92.0% MCQ accuracy and 65.2% Localization@0.5 on the small retention subsets.
 
-One seed, no confidence intervals, and only 37 reports limit interpretation. Nineteen report references have verbatim training copies. BERTScore measures semantic similarity, not clinical correctness. The completed campaign is a negative result, superseding earlier plans that described the four rounds as future work.
+One seed, no confidence intervals, and only 37 reports limit interpretation. Nineteen report references have verbatim training copies. BERTScore measures semantic similarity, not clinical correctness. The initial four-round campaign is complete; the broader RSI investigation remains in progress. These measurements describe the tested recipe and do not constitute a final conclusion about the research direction.
 
 ## Image reliance and controlled noise
 
